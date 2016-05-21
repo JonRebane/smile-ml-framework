@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import representations.Interval;
-import representations.Sequence;
+import data_structures.Interval;
+import data_structures.Sequence;
 
 /***
  * A Generator that randomly generates artificial sequences, according to parameters.

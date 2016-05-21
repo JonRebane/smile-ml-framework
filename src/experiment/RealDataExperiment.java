@@ -10,17 +10,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
-import classification.AbstractCompressedIBSM1NN;
-import classification.AbstractIBSM1NN;
-import classification.AbstractSTIFERFClassifier;
-import classification.MultiLabelCompressedIBSM1NN;
-import classification.MultiLabelIBSM1NN;
-import classification.MultiLabelSTIFERFClassifier;
-import classification.SingleLabelCompressedIBSM1NN;
-import classification.SingleLabelIBSM1NN;
-import classification.SingleLabelSTIFERFClassifier;
-import feature.extraction.framework.IOService;
-import representations.Sequence;
+import data_structures.Sequence;
+import experiment.classifier.AbstractCompressedIBSM1NN;
+import experiment.classifier.AbstractIBSM1NN;
+import experiment.classifier.AbstractSTIFERFClassifier;
+import experiment.classifier.MultiLabelCompressedIBSM1NN;
+import experiment.classifier.MultiLabelIBSM1NN;
+import experiment.classifier.MultiLabelSTIFERFClassifier;
+import experiment.classifier.SingleLabelCompressedIBSM1NN;
+import experiment.classifier.SingleLabelIBSM1NN;
+import experiment.classifier.SingleLabelSTIFERFClassifier;
+import io.IOService;
 
 public class RealDataExperiment extends Experiment{
 
@@ -44,13 +44,13 @@ public class RealDataExperiment extends Experiment{
 
 	public void runExperiment() throws Exception {
 		Map<String,List<ClassifierResult>> results = new LinkedHashMap<>();
-		/*for(File dir : singleLabelDataSetPath.listFiles()){
+		for(File dir : singleLabelDataSetPath.listFiles()){
 			if(dir.isDirectory()){
 				System.out.println(dir.getName());
 				List<ClassifierResult> resultList = singleLabelClassifierEvaluation(dir);
 				results.put(dir.getName(), resultList);
 			}
-		}*/
+		}
 		for(File dir :multLabelDataSetPath.listFiles()){
 			if(dir.isDirectory() && dir.getName().equals("ASL-BU-2")){
 				System.out.println(dir.getName());

@@ -11,15 +11,15 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import distance.feature.extraction.DistanceFeatureMatrix;
-import distance.feature.extraction.DistanceFeatureExtractor;
-import distance.feature.extraction.exceptions.InvalidEventTableDimensionException;
-import distance.feature.extraction.exceptions.TimeScaleException;
+import data_structures.CompressedEventTable;
+import data_structures.EventTable;
+import data_structures.Interval;
+import data_structures.Sequence;
 import experiment.SequenceGenerator;
-import representations.CompressedEventTable;
-import representations.EventTable;
-import representations.Interval;
-import representations.Sequence;
+import stife.distance.DistanceFeatureExtractor;
+import stife.distance.DistanceFeatureMatrix;
+import stife.distance.exceptions.InvalidEventTableDimensionException;
+import stife.distance.exceptions.TimeScaleException;
 
 public class EventTableTest {
 

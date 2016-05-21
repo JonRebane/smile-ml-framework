@@ -11,17 +11,17 @@ import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
-import classification.AbstractSTIFERFClassifier;
-import classification.SingleLabelSTIFERFClassifier;
-import distance.feature.extraction.DistanceFeatureExtractor;
-import distance.feature.extraction.DistanceFeatureMatrix;
+import data_structures.Sequence;
 import experiment.ExperimentUtil;
 import experiment.SequenceGenerator;
-import feature.extraction.framework.IOService;
-import representations.Sequence;
-import shapelet.extraction.Shapelet;
-import shapelet.extraction.ShapeletExtractor;
-import shapelet.extraction.ShapeletFeatureMatrix;
+import experiment.classifier.AbstractSTIFERFClassifier;
+import experiment.classifier.SingleLabelSTIFERFClassifier;
+import io.IOService;
+import stife.distance.DistanceFeatureExtractor;
+import stife.distance.DistanceFeatureMatrix;
+import stife.shapelet.Shapelet;
+import stife.shapelet.ShapeletExtractor;
+import stife.shapelet.ShapeletFeatureMatrix;
 
 public class OnlineFeatureExtractionTest {
 

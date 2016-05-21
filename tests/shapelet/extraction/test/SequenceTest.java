@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import representations.Interval;
-import representations.Sequence;
+import data_structures.Interval;
+import data_structures.Sequence;
 
 public class SequenceTest {
 

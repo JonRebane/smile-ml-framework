@@ -6,8 +6,8 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import shapelet.extraction.FeatureSelection;
-import shapelet.extraction.IndexGainPair;
+import stife.shapelet.FeatureSelection;
+import stife.shapelet.IndexGainPair;
 
 //reference implementation in R was used as a test oracle to calculate the true values
 public class FeatureSelectionTest {

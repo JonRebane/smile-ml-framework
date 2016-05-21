@@ -5,12 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import classification.ClassificationException;
-import classification.MultiLabelSTIFERFClassifier;
-import classification.STIClassifier;
-import distance.feature.extraction.exceptions.InvalidEventTableDimensionException;
-import distance.feature.extraction.exceptions.TimeScaleException;
-import representations.Sequence;
+import data_structures.Sequence;
+import experiment.classifier.ClassificationException;
+import experiment.classifier.MultiLabelSTIFERFClassifier;
+import experiment.classifier.STIClassifier;
+import stife.distance.exceptions.InvalidEventTableDimensionException;
+import stife.distance.exceptions.TimeScaleException;
 
 public abstract class Experiment {
 

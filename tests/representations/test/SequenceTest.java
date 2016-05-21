@@ -6,9 +6,9 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import data_structures.Interval;
+import data_structures.Sequence;
 import experiment.SequenceGenerator;
-import representations.Interval;
-import representations.Sequence;
 
 public class SequenceTest {
 

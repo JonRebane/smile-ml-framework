@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
-import classification.AbstractCompressedIBSM1NN;
-import classification.AbstractIBSM1NN;
-import classification.AbstractSTIFERFClassifier;
-import classification.SingleLabelCompressedIBSM1NN;
-import classification.SingleLabelIBSM1NN;
-import classification.SingleLabelSTIFERFClassifier;
-import representations.Sequence;
+import data_structures.Sequence;
+import experiment.classifier.AbstractCompressedIBSM1NN;
+import experiment.classifier.AbstractIBSM1NN;
+import experiment.classifier.AbstractSTIFERFClassifier;
+import experiment.classifier.SingleLabelCompressedIBSM1NN;
+import experiment.classifier.SingleLabelIBSM1NN;
+import experiment.classifier.SingleLabelSTIFERFClassifier;
 
 public class SyntheticDataExperiment extends Experiment{
 

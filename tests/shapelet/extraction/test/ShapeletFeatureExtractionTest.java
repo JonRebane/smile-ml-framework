@@ -8,11 +8,11 @@ import java.util.List;
 
 import org.junit.Test;
 
+import data_structures.Interval;
+import data_structures.Sequence;
 import experiment.SequenceGenerator;
-import representations.Interval;
-import representations.Sequence;
-import shapelet.extraction.Shapelet;
-import shapelet.extraction.ShapeletFeatureMatrix;
+import stife.shapelet.Shapelet;
+import stife.shapelet.ShapeletFeatureMatrix;
 
 public class ShapeletFeatureExtractionTest {
 	

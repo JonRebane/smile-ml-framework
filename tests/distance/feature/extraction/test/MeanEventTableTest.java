@@ -6,12 +6,12 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import distance.feature.extraction.MeanEventTable;
-import distance.feature.extraction.exceptions.InvalidEventTableDimensionException;
-import distance.feature.extraction.exceptions.TimeScaleException;
-import representations.CompressedEventTable;
-import representations.Interval;
-import representations.Sequence;
+import data_structures.CompressedEventTable;
+import data_structures.Interval;
+import data_structures.Sequence;
+import stife.distance.MeanEventTable;
+import stife.distance.exceptions.InvalidEventTableDimensionException;
+import stife.distance.exceptions.TimeScaleException;
 
 public class MeanEventTableTest {
 
