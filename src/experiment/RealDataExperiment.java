@@ -46,14 +46,14 @@ public class RealDataExperiment extends Experiment{
 		Map<String,List<ClassifierResult>> results = new LinkedHashMap<>();
 		for(File dir : singleLabelDataSetPath.listFiles()){
 			if(dir.isDirectory()){
-				System.out.println(dir.getName());
+				System.out.println("Processing " + dir.getName());
 				List<ClassifierResult> resultList = singleLabelClassifierEvaluation(dir);
 				results.put(dir.getName(), resultList);
 			}
 		}
 		for(File dir :multLabelDataSetPath.listFiles()){
 			if(dir.isDirectory() && dir.getName().equals("ASL-BU-2")){
-				System.out.println(dir.getName());
+				System.out.println("Processing " + dir.getName());
 				List<ClassifierResult> resultList = multiLabelClassifierEvaluation(dir);
 				results.put(dir.getName(), resultList);
 			}
