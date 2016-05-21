@@ -52,7 +52,7 @@ public class RealDataExperiment extends Experiment{
 			}
 		}*/
 		for(File dir :multLabelDataSetPath.listFiles()){
-			if(dir.isDirectory()){
+			if(dir.isDirectory() && dir.getName().equals("ASL-BU-2")){
 				System.out.println(dir.getName());
 				List<ClassifierResult> resultList = multiLabelClassifierEvaluation(dir);
 				results.put(dir.getName(), resultList);

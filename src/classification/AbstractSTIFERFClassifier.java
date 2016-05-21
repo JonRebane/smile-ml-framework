@@ -58,7 +58,6 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 		//distance:
 		DistanceFeatureExtractor distanceFeatureExtractor = new DistanceFeatureExtractor(train, classIds, numDimensions,sequenceDuration);
 		distanceFeatureMatrix = distanceFeatureExtractor.calculateDistanceFeatureMatrix();
-		System.out.println("done with distance features");
 		//shapelets:
 		shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS,classIds);
 		//create all the jobs:
@@ -77,9 +76,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 		for (Future<?> future:futures) {
 			future.get();
 		}
-		System.out.println("Done with shapelet Extraction");
 		shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
-		System.out.println("Done with shapelet Selection");
 		trainInstances = buildInstances(train, classIds, staticFeatureMatrix,distanceFeatureMatrix.getMatrix(),shapeletFeatureMatrix.getMatrix(), "testdata" + File.separator + "stifeTrainData.csv");
 		rf = new RandomForest();
 		Integer numFeaturesPerTree = new Integer((int) Math.sqrt(trainInstances.numAttributes()-1));

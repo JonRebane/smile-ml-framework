@@ -105,7 +105,6 @@ public class ShapeletFeatureMatrix {
 	 * @throws InterruptedException 
 	 */
 	public void featureSelection(Collection<Integer> trainIndices, int n) throws InterruptedException, ExecutionException{
-		System.out.println("begin feature selection");
 		//remove useless columns:
 		removeAllZeroColumns(trainIndices);
 		assert(n <= shapeletFeatureMatrix[0].length);
@@ -124,7 +123,6 @@ public class ShapeletFeatureMatrix {
 		Iterator<IndexGainPair> orderedIterator = set.descendingIterator();
 		//prev is just used for some assertions that sorting worked
 		IndexGainPair prev = null;
-		System.out.println("done witzh info gain calculation");
 		while(count < n){
 			assert(orderedIterator.hasNext());
 			IndexGainPair curPair = orderedIterator.next();
@@ -174,11 +172,9 @@ public class ShapeletFeatureMatrix {
 		shapeletFeatureMatrix = newResMatrix;
 		assert(shapeletsOfColumns==null);
 		shapeletsOfColumns = newShapeletsOfColumns;
-		System.out.println("done reducing to useful columns");
 	}
 
 	private List<Integer> extractUsefulColumns(Collection<Integer> trainIndices, ExecutorService pool) throws InterruptedException, ExecutionException {
-		System.out.println("numCols: " +shapeletFeatureMatrix[0].length);
 		int incCount = 1000;
 		List<Future<List<Integer>>> futures = new ArrayList<>();
 		for(int col = 0;col<shapeletFeatureMatrix[0].length;col += incCount){
@@ -188,7 +184,6 @@ public class ShapeletFeatureMatrix {
 		for(Future<List<Integer>> future :futures){
 			usefullColumns.addAll(future.get());
 		}
-		System.out.println("done finding useful columns");
 		return usefullColumns;
 	}
 
