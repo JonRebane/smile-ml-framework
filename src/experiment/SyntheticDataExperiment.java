@@ -28,7 +28,7 @@ public class SyntheticDataExperiment extends Experiment{
 	private int shapeletFeatureCount;
 	private int epsilon;
 	private ExecutorService pool;
-	private String outPath = "temp/sequenceDuration.txt";
+	private String outPath = "syntheticExperimentResults/sequenceDuration.txt";
 
 	public SyntheticDataExperiment(ExecutorService pool, int epsilon, int shapeletFeatureCount) {
 		this.pool = pool;

@@ -85,8 +85,8 @@ public class OnlineFeatureExtractionTest {
 	@Test
 	public void pioneer10_0RealDataTest() throws Exception {
 		double tolerance = 0.00000000000001;
-		String rootPath = "data/PIONEER/";
-		String specificPath = "data/PIONEER/10_0/";
+		String rootPath = "data/singleLabelDatasets/PIONEER/";
+		String specificPath = "data/singleLabelDatasets/PIONEER/10_0/";
 		List<Integer> trainIndices = IOService.readTrainIndices(new File(specificPath));
 		List<Sequence> database = IOService.readSequenceData(new File(rootPath));
 		List<Integer> testIndices = ExperimentUtil.getTestIndices(database.size(), trainIndices);
@@ -129,8 +129,8 @@ public class OnlineFeatureExtractionTest {
 	
 	@Test
 	public void testShapeletFeatureMatrixDifference() throws Exception{
-		String rootPath = "data/PIONEER/";
-		String specificPath = "data/PIONEER/10_0/";
+		String rootPath = "data/singleLabelDatasets/PIONEER/";
+		String specificPath = "data/singleLabelDatasets/PIONEER/10_0/";
 		List<Integer> trainIndices = IOService.readTrainIndices(new File(specificPath));
 		List<Sequence> database = IOService.readSequenceData(new File(rootPath));
 		List<Integer> testIndices = ExperimentUtil.getTestIndices(database.size(), trainIndices);

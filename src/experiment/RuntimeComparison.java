@@ -12,8 +12,8 @@ public class RuntimeComparison {
 		ExecutorService pool = Executors.newCachedThreadPool();
 		int epsilon = 5;
 		int shapeletFeatureCount = 75;
-		File singleLabelDatasetPath = new File("data");
-		File multiLabelDatasetPath = new File("multiLabelDatasets");
+		File singleLabelDatasetPath = new File("data/singleLabelDatasets");
+		File multiLabelDatasetPath = new File("data/multiLabelDatasets");
 		RealDataExperiment experiment = new RealDataExperiment(pool,epsilon,shapeletFeatureCount,singleLabelDatasetPath,multiLabelDatasetPath,new Random(13),10);
 		experiment.runExperiment();
 		/*SyntheticDataExperiment syntheticExperiment = new SyntheticDataExperiment(pool,epsilon,shapeletFeatureCount);
