@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class ShapeletFeatureMatrix {
 	private short[][] shapeletFeatureMatrix;
 	private int numDistinctEvents;
 	private List<Integer> classIds;
-	private Shapelet[] shapeletsOfColumns = null;
+	private Shapelet_Size2[] shapeletsOfColumns = null;
 	
 	/***
 	 * Initializes a shapelet feature matrix fitting to the parameters, classIds is required to be able to do feature selection
@@ -71,13 +71,13 @@ public class ShapeletFeatureMatrix {
 	 * @param colIndex
 	 * @return
 	 */
-	public Shapelet getShapeletOfColumn(int colIndex){
+	public Shapelet_Size2 getShapeletOfColumn(int colIndex){
 		if(shapeletsOfColumns==null){
 			//no feature selection took place yet.
 			int eventId1 = colIndex%(numDistinctEvents) + 1;
 			int eventId2 = (colIndex/numDistinctEvents)%(numDistinctEvents) +1;
 			int relationshipId = colIndex/(numDistinctEvents*numDistinctEvents) +1;
-			return new Shapelet(eventId1,eventId2,relationshipId);
+			return new Shapelet_Size2(eventId1,eventId2,relationshipId);
 		} else{
 			return shapeletsOfColumns[colIndex];
 		}
@@ -111,7 +111,7 @@ public class ShapeletFeatureMatrix {
 		if(n>shapeletFeatureMatrix[0].length){
 			return;
 		}
-		Shapelet[] newShapeletsOfColumns = new Shapelet[n];
+		Shapelet_Size2[] newShapeletsOfColumns = new Shapelet_Size2[n];
 		TreeSet<IndexGainPair> set = new TreeSet<>();
 		for(int i=0;i<shapeletFeatureMatrix[0].length;i++){
 			//TODO
@@ -131,7 +131,7 @@ public class ShapeletFeatureMatrix {
 			}
 			int colIndex = curPair.getIndex();
 			copyColumn(newResultMatrix,count,shapeletFeatureMatrix,colIndex);
-			Shapelet shapeletOfColumn = getShapeletOfColumn(colIndex);
+			Shapelet_Size2 shapeletOfColumn = getShapeletOfColumn(colIndex);
 			assert(shapeletOfColumn!=null);
 			newShapeletsOfColumns[count] = shapeletOfColumn;
 			prev = curPair;
@@ -159,7 +159,7 @@ public class ShapeletFeatureMatrix {
 	}
 
 	private void reduceColumns(List<Integer> usefulColumns, ExecutorService pool) throws InterruptedException, ExecutionException {
-		Shapelet[] newShapeletsOfColumns = new Shapelet[usefulColumns.size()];
+		Shapelet_Size2[] newShapeletsOfColumns = new Shapelet_Size2[usefulColumns.size()];
 		short[][] newResMatrix = new short[shapeletFeatureMatrix.length][usefulColumns.size()];
 		int incCount = 1000;
 		List<Future<?>> futures = new ArrayList<>();

@@ -19,9 +19,9 @@ import experiment.classifier.SingleLabelSTIFERFClassifier;
 import io.IOService;
 import stife.distance.DistanceFeatureExtractor;
 import stife.distance.DistanceFeatureMatrix;
-import stife.shapelet.Shapelet;
-import stife.shapelet.ShapeletExtractor;
-import stife.shapelet.ShapeletFeatureMatrix;
+import stife.shapelet_size2.Shapelet_Size2;
+import stife.shapelet_size2.ShapeletExtractor;
+import stife.shapelet_size2.ShapeletFeatureMatrix;
 
 public class OnlineFeatureExtractionTest {
 

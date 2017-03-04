@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 
 import java.util.List;
 
@@ -6,13 +6,13 @@ public class ColumnCopier implements Runnable {
 
 	private short[][] oldShapeletFeatureMatrix;
 	private short[][] newShapeletFeatureMatrix;
-	private Shapelet[] newShapeletsOfColumns;
+	private Shapelet_Size2[] newShapeletsOfColumns;
 	private int upper;
 	private int lower;
 	private List<Integer> usefulColumns;
 	private ShapeletFeatureMatrix matrixObject;
 
-	public ColumnCopier(ShapeletFeatureMatrix matrixObject, List<Integer> usefulColumns, short[][] oldShapeletFeatureMatrix, short[][] newShapeletFeatureMatrix, Shapelet[] newShapeletsOfColumns,int lower, int upper) {
+	public ColumnCopier(ShapeletFeatureMatrix matrixObject, List<Integer> usefulColumns, short[][] oldShapeletFeatureMatrix, short[][] newShapeletFeatureMatrix, Shapelet_Size2[] newShapeletsOfColumns,int lower, int upper) {
 		this.matrixObject = matrixObject;
 		this.usefulColumns = usefulColumns;
 		this.oldShapeletFeatureMatrix = oldShapeletFeatureMatrix;

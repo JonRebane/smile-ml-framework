@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 
 /***
  * Class used by the feature selection to sort the column indices of the shapeletFeatureMatrix by their column's information gain.

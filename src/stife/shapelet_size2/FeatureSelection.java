@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;

@@ -14,12 +14,15 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import algorithms.Algorithms;
 import stife.distance.Event;
 import stife.distance.EventType;
-import stife.shapelet.Shapelet;
-import stife.shapelet.ShapeletFeatureMatrix;
+import stife.shapelet.NShapelet;
+import stife.shapelet_size2.Shapelet_Size2;
+import stife.shapelet_size2_new.ShapeletSize2;
+import stife.shapelet_size2.ShapeletFeatureMatrix;
 
 /***
  * 
@@ -28,6 +31,8 @@ import stife.shapelet.ShapeletFeatureMatrix;
  */
 public class Sequence {
 
+	
+	
 	public static int getMaxDuration(List<Sequence> database) {
 		int maxDuration = -1;
 		for(Sequence seq : database){
@@ -268,7 +273,7 @@ public class Sequence {
 		}
 	}
 
-	public short countShapeletOccurance(Shapelet shapelet,int epsilon) {
+	public short countShapeletOccurance(Shapelet_Size2 shapelet,int epsilon) {
 		//TODO: Test this oh man oh man :D
 		int e = epsilon;
 		short count = 0;
@@ -445,4 +450,34 @@ public class Sequence {
 			intervals[i][0] = newDimensionMapping.get(intervals[i][0]).intValue();
 		}
 	}
+
+	public boolean containsNSHapelet(NShapelet shapelet,int epsilon) {
+		List<Pair<Integer, Integer>> occurrences = shapelet.get2Shapelet(0).getAllOccurrences(this, epsilon);
+		Set<Integer> relevantPreviousIds = occurrences.stream()
+				.map(p -> p.getSecond())
+				.distinct()
+				.collect(Collectors.toSet());
+		for(int i=1;i<shapelet.numTwoShapelets();i++){
+			if(relevantPreviousIds.isEmpty()){
+				return false;
+			}
+			ShapeletSize2 curShapelet = shapelet.get2Shapelet(i);
+			Set<Integer> newPreviousIds = new HashSet<>();
+			for(int intervalId : relevantPreviousIds){
+				assert(getInterval(intervalId).getDimension()==curShapelet.getEventId1());
+				List<Integer> occ = curShapelet.getOccurrences(this,intervalId, epsilon);
+				newPreviousIds.addAll(occ);
+			}
+			relevantPreviousIds = newPreviousIds;
+		}
+		return !relevantPreviousIds.isEmpty();
+		
+		
+	}
+
+	public List<Interval> getIntervalsInTimeRange(int start, int end) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

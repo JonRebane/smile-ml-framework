@@ -11,8 +11,8 @@ import org.junit.Test;
 import data_structures.Interval;
 import data_structures.Sequence;
 import experiment.SequenceGenerator;
-import stife.shapelet.Shapelet;
-import stife.shapelet.ShapeletFeatureMatrix;
+import stife.shapelet_size2.Shapelet_Size2;
+import stife.shapelet_size2.ShapeletFeatureMatrix;
 
 public class ShapeletFeatureExtractionTest {
 	
@@ -47,7 +47,7 @@ public class ShapeletFeatureExtractionTest {
 			for(int j=1;j<=numDistinctEvents;j++){
 				for(int r=1;r<=numRelationships;r++){
 					int colInd = res.calcColumnIndex(i, j, r);
-					Shapelet shapelet = res.getShapeletOfColumn(colInd);
+					Shapelet_Size2 shapelet = res.getShapeletOfColumn(colInd);
 					assertEquals(i, shapelet.getEventId1());
 					assertEquals(j, shapelet.getEventId2());
 					assertEquals(r, shapelet.getRelationshipId());
@@ -106,12 +106,12 @@ public class ShapeletFeatureExtractionTest {
 		Sequence seq = testSequences.get(0);
 		int meet = 1; int match = 2; int overlap = 3; int leftContains = 4; int contains = 5;int rightContains = 6; int followedBy = 7;
 		int e = 5;
-		assertEquals(1,seq.countShapeletOccurance(new Shapelet(3, 1, overlap), e));
-		assertEquals(1,seq.countShapeletOccurance(new Shapelet(1, 3, leftContains), e));
-		assertEquals(1,seq.countShapeletOccurance(new Shapelet(1, 3, rightContains), e));
+		assertEquals(1,seq.countShapeletOccurance(new Shapelet_Size2(3, 1, overlap), e));
+		assertEquals(1,seq.countShapeletOccurance(new Shapelet_Size2(1, 3, leftContains), e));
+		assertEquals(1,seq.countShapeletOccurance(new Shapelet_Size2(1, 3, rightContains), e));
 		seq = testSequences.get(2);
-		assertEquals(3,seq.countShapeletOccurance(new Shapelet(1, 3, match), e));
-		assertEquals(1,seq.countShapeletOccurance(new Shapelet(1, 3, overlap), e));
+		assertEquals(3,seq.countShapeletOccurance(new Shapelet_Size2(1, 3, match), e));
+		assertEquals(1,seq.countShapeletOccurance(new Shapelet_Size2(1, 3, overlap), e));
 	}
 
 	@Test
@@ -128,7 +128,7 @@ public class ShapeletFeatureExtractionTest {
 			Sequence curSeq = testSequences.get(i);
 			curSeq.countAllShapelets(i, shapeletFeatureMatrix, e);
 			for(int j=0;j<shapeletFeatureMatrix.numCols();j++){
-				Shapelet curShapelet = shapeletFeatureMatrix.getShapeletOfColumn(j);
+				Shapelet_Size2 curShapelet = shapeletFeatureMatrix.getShapeletOfColumn(j);
 				short directCountResult = curSeq.countShapeletOccurance(curShapelet, e);
 				short matrixCountResult = shapeletFeatureMatrix.getAt(i, j);
 				assertEquals(matrixCountResult,directCountResult);

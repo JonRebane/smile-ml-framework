@@ -15,9 +15,9 @@ import stife.distance.DistanceFeatureExtractor;
 import stife.distance.DistanceFeatureMatrix;
 import stife.distance.exceptions.InvalidEventTableDimensionException;
 import stife.distance.exceptions.TimeScaleException;
-import stife.shapelet.Shapelet;
-import stife.shapelet.ShapeletExtractor;
-import stife.shapelet.ShapeletFeatureMatrix;
+import stife.shapelet_size2.Shapelet_Size2;
+import stife.shapelet_size2.ShapeletExtractor;
+import stife.shapelet_size2.ShapeletFeatureMatrix;
 import stife.static_metrics.StaticFeatureMatrix;
 import stife.static_metrics.StaticMetricExtractor;
 import weka.classifiers.trees.RandomForest;
@@ -210,7 +210,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 	public short[] onlineShapeletFeatureExtraction(Sequence sequence) {
 		short[] shapeletFeatures = new short[shapeletFeatureMatrix.numCols()];
 		for(int i=0;i<shapeletFeatureMatrix.numCols();i++){
-			Shapelet curShapelet = shapeletFeatureMatrix.getShapeletOfColumn(i);
+			Shapelet_Size2 curShapelet = shapeletFeatureMatrix.getShapeletOfColumn(i);
 			shapeletFeatures[i] = sequence.countShapeletOccurance(curShapelet,epsilon);
 		}
 		return shapeletFeatures;

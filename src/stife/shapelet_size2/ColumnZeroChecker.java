@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 
 import java.util.ArrayList;
 import java.util.Collection;

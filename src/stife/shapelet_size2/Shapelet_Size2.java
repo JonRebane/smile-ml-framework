@@ -1,12 +1,12 @@
-package stife.shapelet;
+package stife.shapelet_size2;
 
-public class Shapelet {
+public class Shapelet_Size2 {
 	
 	private int eventId1;
 	private int eventId2;
 	private int relationshipId;
 	
-	public Shapelet(int eventId1, int eventId2, int relationshipId) {
+	public Shapelet_Size2(int eventId1, int eventId2, int relationshipId) {
 		super();
 		this.eventId1 = eventId1;
 		this.eventId2 = eventId2;
