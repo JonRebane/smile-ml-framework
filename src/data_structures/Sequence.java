@@ -88,8 +88,9 @@ public class Sequence {
 	 * uses a table and not a list of Event-objects to optimize performance, one line in this table is basically an event object
 	 * first column: event dimension, second column: start-time, third column: end-time
 	 */
-	private int[][] intervals;
 
+	List<Interval> intervals = new ArrayList<>();
+	
 	private boolean isSorted = false;
 	
 	//number of temporal relationships between intervals is fixed.
@@ -97,17 +98,13 @@ public class Sequence {
 	
 	public Sequence(List<Interval> intervalList) {
 		assert(intervalList.size()>0);
-		intervals = new int[intervalList.size()][3];
 		fillIntervals(intervalList);
+		sortIntervals();
 	}
 
 	private void fillIntervals(List<Interval> intervalList) {
-		assert(intervalList.size()==intervals.length);
 		for(int i=0;i<intervalList.size();i++){
-			Interval e = intervalList.get(i);
-			intervals[i][0] = e.getDimension();
-			intervals[i][1] = e.getStart();
-			intervals[i][2] = e.getEnd();
+			intervals.add( intervalList.get(i).deepCopy());
 		}
 	}
 
@@ -116,20 +113,12 @@ public class Sequence {
 	 * @param seq
 	 */
 	public Sequence(Sequence seq) {
-		intervals = new int[seq.intervalCount()][3];
-		for(int i=0;i<seq.intervals.length;i++){
-			intervals[i][0] = seq.intervals[i][0];
-			intervals[i][1] = seq.intervals[i][1];
-			intervals[i][2] = seq.intervals[i][2];
-		}
+		fillIntervals(seq.getAllIntervals());
+		sortIntervals();
 	}
 
 	public Collection<Integer> getAllDimensions() {
-		Set<Integer> dimensions = new HashSet<>();
-		for(int i=0;i<intervals.length;i++){
-			dimensions.add(intervals[i][0]);
-		}
-		return dimensions;
+		return intervals.stream().map(i -> i.getDimension()).collect(Collectors.toSet());
 	}
 
 	/***
@@ -141,23 +130,23 @@ public class Sequence {
 	public void countAllShapelets(Integer seqId, ShapeletFeatureMatrix shapeletFeatureMatrix, int epsilon) {
 		//epsilon:
 		int e = epsilon;
-		for(int i=0;i<intervals.length;i++){
-			int aId = intervals[i][0];
-			int aStart = intervals[i][1];
-			int aEnd = intervals[i][2];
+		for(int i=0;i<intervals.size();i++){
+			int aId = intervals.get(i).getDimension();
+			int aStart = intervals.get(i).getStart();
+			int aEnd = intervals.get(i).getEnd();
 			//all events after A are always relevant
-			for(int j=i+1;j<intervals.length;j++){
-				int bId = intervals[j][0];
-				int bStart = intervals[j][1];
-				int bEnd = intervals[j][2];
+			for(int j=i+1;j<intervals.size();j++){
+				int bId = intervals.get(j).getDimension();
+				int bStart = intervals.get(j).getStart();
+				int bEnd = intervals.get(j).getEnd();
 				int relationshipId = getRelationship(aStart,aEnd,bStart,bEnd,e);
 				shapeletFeatureMatrix.incAt(seqId, aId, bId, relationshipId);
 			}
 			//some events that start at the same time as A may be before A in the order, we need to consider those as well:
 			for(int j=i-1;j>=0;j--){
-				int bId = intervals[j][0];
-				int bStart = intervals[j][1];
-				int bEnd = intervals[j][2];
+				int bId = intervals.get(j).getDimension();
+				int bStart = intervals.get(j).getStart();
+				int bEnd = intervals.get(j).getEnd();
 				if(aStart - e > bStart){
 					break;
 				} else{
@@ -221,55 +210,32 @@ public class Sequence {
 	}
 	
 	public int intervalCount() {
-		return intervals.length;
+		return intervals.size();
 	}
 
 	public int duration() {
-		if(!isSorted){
-			int max = -1;
-			for(int i=0;i<intervals.length;i++){
-				if(intervals[i][2] > max){
-					max = intervals[i][2];
-				}
-			}
-			return max;
-		} else{
-			return intervals[intervals.length-1][2];
-		}
+		return intervals.stream().mapToInt(i -> i.getEnd()).max().getAsInt();
 	}
 	
 	public int earliestStart() {
-		if(!isSorted){
-			int min = Integer.MAX_VALUE;
-			for(int i=0;i<intervals.length;i++){
-				if(intervals[i][1] < min){
-					min = intervals[i][1];
-				}
-			}
-			return min;
-		} else{
-			return intervals[0][1];
-		}
+		return intervals.stream().mapToInt(i -> i.getStart()).min().getAsInt();
 	}
 
 	public Interval getInterval(int i) {
-		return new Interval(intervals[i][0],intervals[i][1],intervals[i][2]);
+		return intervals.get(i);
 	}
 
 	public List<Interval> getAllIntervals() {
-		List<Interval> intervalList = new ArrayList<>();
-		for( int i=0;i<intervalCount();i++){
-			intervalList.add(getInterval(i));
-		}
-		return intervalList;
+		return intervals;
 	}
 	
 	public void rescaleTimeAxis(int newScaleMin, int newScaleMax){
 		int xmin = earliestStart();
 		int xmax = duration();
-		for(int i=0;i<intervals.length;i++){
-			intervals[i][1] = Algorithms.linearInterpolation(xmin,xmax,intervals[i][1],newScaleMin,newScaleMax);
-			intervals[i][2] = Algorithms.linearInterpolation(xmin,xmax,intervals[i][2],newScaleMin,newScaleMax);
+		for(int i=0;i<intervals.size();i++){
+			int newStart = Algorithms.linearInterpolation(xmin,xmax,intervals.get(i).getStart(),newScaleMin,newScaleMax);
+			int newEnd = Algorithms.linearInterpolation(xmin,xmax,intervals.get(i).getEnd(),newScaleMin,newScaleMax);
+			intervals.set(i, new Interval(intervals.get(i).getDimension(),newStart,newEnd));
 		}
 	}
 
@@ -278,10 +244,10 @@ public class Sequence {
 		int e = epsilon;
 		short count = 0;
 		List<Interval> relevantIntervals = new ArrayList<>();
-		for(int i=0;i<intervals.length;i++){
-			int eventId = intervals[i][0];
+		for(int i=0;i<intervals.size();i++){
+			int eventId = intervals.get(i).getDimension();
 			if(eventId == shapelet.getEventId1() || eventId==shapelet.getEventId2()){
-				relevantIntervals.add(new Interval(eventId,intervals[i][1],intervals[i][2]));
+				relevantIntervals.add(new Interval(eventId,intervals.get(i).getStart(),intervals.get(i).getEnd()));
 			}
 		}
 		for(int i=0;i<relevantIntervals.size();i++){
@@ -329,16 +295,14 @@ public class Sequence {
 	 * Orders Intervals in this sequence according to the following scheme: startTime, (if startTime is equal: endTime), if both of these are equal, dimension
 	 */
 	public void sortIntervals() {
-		List<Interval> intervalsSorted = getAllIntervals();
-		Collections.sort(intervalsSorted, new StandardIntervalComparator());
-		fillIntervals(intervalsSorted);
+		Collections.sort(intervals, new StandardIntervalComparator());
 		isSorted  = true;
 	}
 
 	public Map<Integer, Integer> getDimensionOccurances() {
 		Map<Integer,Integer> occuranceMap = new HashMap<>();
-		for(int i=0;i<intervals.length;i++){
-			int curDim = intervals[i][0];
+		for(int i=0;i<intervals.size();i++){
+			int curDim = intervals.get(i).getDimension();
 			if(occuranceMap.containsKey(curDim)){
 				occuranceMap.put(curDim, occuranceMap.get(curDim)+1);
 			} else{
@@ -350,8 +314,8 @@ public class Sequence {
 
 	public long getDensity() {
 		long density = 0;
-		for(int i=0;i<intervals.length;i++){
-			density += intervals[i][2] - intervals[i][1];
+		for(int i=0;i<intervals.size();i++){
+			density += intervals.get(i).getEnd() - intervals.get(i).getStart();
 		}
 		return density;
 	}
@@ -359,8 +323,8 @@ public class Sequence {
 	public int getMaxConcurrentIntervalCount() {
 		//TODO: test this
 		PriorityQueue<Integer> endTimes = new PriorityQueue<>();
-		for(int i=0;i<intervals.length;i++){
-			endTimes.add(intervals[i][2]);
+		for(int i=0;i<intervals.size();i++){
+			endTimes.add(intervals.get(i).getEnd());
 		}
 		int searchStartRow = 0;
 		int maxCount = -1;
@@ -368,10 +332,10 @@ public class Sequence {
 		while(!endTimes.isEmpty()){
 			Integer curEnd = endTimes.remove();
 			int intervalCount = 0;
-			for(int i=searchStartRow;i<intervals.length;i++){
-				int curStart = intervals[i][1];
-				if(curStart > curEnd || i==intervals.length-1){
-					if(i==intervals.length-1){
+			for(int i=searchStartRow;i<intervals.size();i++){
+				int curStart = intervals.get(i).getStart();
+				if(curStart > curEnd || i==intervals.size()-1){
+					if(i==intervals.size()-1){
 						intervalCount = i+1-ends;
 					} else{
 						intervalCount = i-ends;
@@ -416,9 +380,9 @@ public class Sequence {
 
 	private List<Event> getSortedEventList() {
 		List<Event> startAndStopEvents = new ArrayList<>();
-		for(int i=0;i<intervals.length;i++){
-			startAndStopEvents.add(new Event(intervals[i][1], intervals[i][0], EventType.Start));
-			startAndStopEvents.add(new Event(intervals[i][2], intervals[i][0], EventType.End));
+		for(int i=0;i<intervals.size();i++){
+			startAndStopEvents.add(new Event(intervals.get(i).getStart(), intervals.get(i).getDimension(), EventType.Start));
+			startAndStopEvents.add(new Event(intervals.get(i).getEnd(), intervals.get(i).getDimension(), EventType.End));
 		}
 		Collections.sort(startAndStopEvents);
 		return startAndStopEvents;
@@ -446,8 +410,8 @@ public class Sequence {
 	}
 
 	public void reassignDimensionIds(HashMap<Integer, Integer> newDimensionMapping) {
-		for(int i=0;i<intervals.length;i++){
-			intervals[i][0] = newDimensionMapping.get(intervals[i][0]).intValue();
+		for(int i=0;i<intervals.size();i++){
+			intervals.set(i, new Interval(newDimensionMapping.get(intervals.get(i).getDimension()),intervals.get(i).getStart(),intervals.get(i).getEnd()));
 		}
 	}
 
@@ -475,9 +439,44 @@ public class Sequence {
 		
 	}
 
-	public List<Interval> getIntervalsInTimeRange(int start, int end) {
-		// TODO Auto-generated method stub
-		return null;
+	/***
+	 * Returns all intervals that are within the bounds given to the function
+	 * @param startTimeInclusive
+	 * @param endTimeInclusive
+	 * @param intervalId... forbidden 
+	 * @return
+	 */
+	public List<Pair<Integer,Interval>> getIntervalsInTimeRange(int startTimeInclusive, int endTimeInclusive, int forbidden) {
+		List<Pair<Integer,Interval>> results = new ArrayList<>();
+		for(int i=0;i<intervals.size();i++){
+			Interval interval = intervals.get(i);
+			if(interval.getStart()>= startTimeInclusive && interval.getEnd() <= endTimeInclusive && i != forbidden){
+				results.add(new Pair<>(i,interval));
+			}
+		}
+		return results;
+		//TODO: mit binärsuche machen (codeschnipsel unten)
+//		assert(isSorted);
+//		int startIndex = 0;
+//		int endIndex = intervals.size();
+//		int equalIndex = -1;
+//		while(startIndex <=endIndex){
+//			int toCheck =  startIndex + ((endIndex - startIndex) / 2);
+//			int curStart = intervals.get(toCheck).getStart();
+//			if(curStart == startTimeInclusive){
+//				equalIndex = toCheck;
+//				break;
+//			} else if(curStart>startTimeInclusive){
+//				endIndex = toCheck-1;
+//			} else{
+//				startIndex = toCheck+1;
+//			}
+//		}
+	}
+	
+	@Override
+	public String toString(){
+		return intervals.toString();
 	}
 
 }

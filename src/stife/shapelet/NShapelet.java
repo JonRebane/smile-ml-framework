@@ -2,6 +2,8 @@ package stife.shapelet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import stife.shapelet_size2.Shapelet_Size2;
 import stife.shapelet_size2_new.AbstractShapeletSize2;
@@ -18,15 +20,11 @@ public class NShapelet {
 		relationships.add(basis.getRelationshipId());
 	}
 
-	
-
 	public NShapelet(List<Integer> eventIds, List<Integer> relationships) {
 		super();
 		this.eventIds = eventIds;
 		this.relationships = relationships;
 	}
-
-
 
 	public NShapelet deepCopy() {
 		ArrayList<Integer> newEventIds = new ArrayList<Integer>();
@@ -53,10 +51,14 @@ public class NShapelet {
 		return AbstractShapeletSize2.create(eventIds.get(i),eventIds.get(i+1),relationships.get(i));
 	}
 
-
-
 	public int numTwoShapelets() {
 		return relationships.size();
 	}
 
+	@Override
+	public String toString(){
+		return IntStream.range(0, numTwoShapelets()).boxed()
+			.map(i -> get2Shapelet(i).toString())
+			.collect(Collectors.toList()).toString();
+	}
 }

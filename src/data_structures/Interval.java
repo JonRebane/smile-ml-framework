@@ -43,6 +43,13 @@ public class Interval {
 		this.start = Integer.parseInt(tokens[2]);
 		this.end = Integer.parseInt(tokens[3]);
 	}
+
+	public Interval deepCopy() {
+		return new Interval(dimension,start,end);
+	}
 	
-	
+	@Override
+	public String toString(){
+		return "(" + dimension +","+ start + ","+end +")";
+	}
 }

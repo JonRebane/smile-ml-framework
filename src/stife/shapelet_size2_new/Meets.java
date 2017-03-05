@@ -28,7 +28,7 @@ public class Meets extends AbstractShapeletSize2 {
 		while(curIntervalId <sequence.intervalCount() && isEqualWithTolerance(endTime , sequence.getInterval(curIntervalId).getStart(), epsilon)){
 			Interval curInterval = sequence.getInterval(curIntervalId);
 			if(curInterval.getDimension()==getEventId2()){
-				allOccurrences.add(curInterval.getEnd());
+				allOccurrences.add(curIntervalId);
 			}
 			curIntervalId++;
 		}
@@ -37,11 +37,16 @@ public class Meets extends AbstractShapeletSize2 {
 		while(curIntervalId >0 && isEqualWithTolerance(endTime , sequence.getInterval(curIntervalId).getStart(), epsilon)){
 			Interval curInterval = sequence.getInterval(curIntervalId);
 			if(curInterval.getDimension()==getEventId2()){
-				allOccurrences.add(curInterval.getEnd());
+				allOccurrences.add(curIntervalId);
 			}
 			curIntervalId--;
 		}
 		return allOccurrences;
+	}
+	
+	@Override
+	public String getRelationshipName() {
+		return "meets";
 	}
 
 }
