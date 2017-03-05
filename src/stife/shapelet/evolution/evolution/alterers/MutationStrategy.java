@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet.evolution.evolution.alterers;
 
 public interface MutationStrategy<T> {
 

@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet.evolution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +29,8 @@ public class NShapelet {
 	public NShapelet deepCopy() {
 		ArrayList<Integer> newEventIds = new ArrayList<Integer>();
 		List<Integer> newRelationships = new ArrayList<>();
-		newEventIds.forEach(i -> newEventIds.add(i));
-		newRelationships.forEach(i -> relationships.add(i));
+		eventIds.forEach(i -> newEventIds.add(i));
+		relationships.forEach(i -> newRelationships.add(i));
 		return new NShapelet(newEventIds,newRelationships);
 	}
 
@@ -60,5 +60,38 @@ public class NShapelet {
 		return IntStream.range(0, numTwoShapelets()).boxed()
 			.map(i -> get2Shapelet(i).toString())
 			.collect(Collectors.toList()).toString();
+	}
+
+	public void remove2Shapelet(int i) {
+		assert(relationships.size()>i && relationships.size()>1);
+		eventIds.remove(i+1);
+		relationships.remove(i);
+		
+	}
+
+	public int getLastEventId() {
+		return eventIds.get(eventIds.size()-1);
+	}
+
+	public int numEvents() {
+		assert(eventIds.size()-1==relationships.size());
+		return eventIds.size();
+	}
+
+	public int getEventId(int i) {
+		return eventIds.get(i);
+	}
+
+	public void setEventId(int i, int newEventId) {
+		eventIds.set(i, newEventId);
+	}
+
+	public int numRelationships() {
+		assert(relationships.size()>0);
+		return relationships.size();
+	}
+
+	public void setRelationship(int i, int newRelationship) {
+		relationships.set(i, newRelationship);
 	}
 }

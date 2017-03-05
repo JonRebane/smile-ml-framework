@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import algorithms.Algorithms;
 import stife.distance.Event;
 import stife.distance.EventType;
-import stife.shapelet.NShapelet;
+import stife.shapelet.evolution.NShapelet;
 import stife.shapelet_size2.Shapelet_Size2;
 import stife.shapelet_size2_new.ShapeletSize2;
 import stife.shapelet_size2.ShapeletFeatureMatrix;

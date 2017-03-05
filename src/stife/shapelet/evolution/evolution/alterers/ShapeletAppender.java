@@ -1,8 +1,9 @@
-package stife.shapelet;
+package stife.shapelet.evolution.evolution.alterers;
 
 import java.util.Random;
 
 import data_structures.Sequence;
+import stife.shapelet.evolution.NShapelet;
 import stife.shapelet_size2.Shapelet_Size2;
 
 public class ShapeletAppender implements MutationStrategy<NShapelet> {

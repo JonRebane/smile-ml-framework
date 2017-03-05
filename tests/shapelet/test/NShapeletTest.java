@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import data_structures.Interval;
 import data_structures.Sequence;
-import stife.shapelet.NShapelet;
+import stife.shapelet.evolution.NShapelet;
 import stife.shapelet_size2_new.ShapeletSize2;
 
 public class NShapeletTest {

@@ -1,4 +1,4 @@
-package stife.shapelet;
+package stife.shapelet.evolution;
 
 import java.util.ArrayList;
 import java.util.List;

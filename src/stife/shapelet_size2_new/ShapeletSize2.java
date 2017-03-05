@@ -7,13 +7,13 @@ import data_structures.Sequence;
 
 public interface ShapeletSize2 {
 	
-	public static final int MEET = 1;
-	public static final int MATCH = 2;
-	public static final int OVERLAP = 3;
-	public static final int LEFTCONTAINS = 4;
-	public static final int CONTAINS = 5;
-	public static final int RGHTCONTAINS = 6;
-	public static final int FOLLOWEDBY = 7;
+	public static final int MEET = 0;
+	public static final int MATCH = 1;
+	public static final int OVERLAP = 2;
+	public static final int LEFTCONTAINS = 3;
+	public static final int CONTAINS = 4;
+	public static final int RGHTCONTAINS = 5;
+	public static final int FOLLOWEDBY = 6;
 
 	public int getEventId1();
 	
