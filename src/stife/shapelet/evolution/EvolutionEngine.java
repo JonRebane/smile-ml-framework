@@ -43,7 +43,7 @@ public class EvolutionEngine<T> {
 	}
 	
 	public void printBest(){
-		bestIndividuals.forEach(p -> System.out.println(p));
+		bestIndividuals.stream().sorted((p1,p2) -> p1.getSecond().compareTo(p2.getSecond())).forEachOrdered(p -> System.out.println(p));
 	}
 
 	private void updateBest(Map<T, Double> evaluatedPopulation) {
@@ -51,7 +51,11 @@ public class EvolutionEngine<T> {
 		//prune best:
 		while(bestIndividuals.size()>numBest){
 			Pair<T, Double> removed = bestIndividuals.poll();
-			System.out.println("removed " + removed.getFirst() + " with fitness " + removed.getSecond() + " from best");
+			NShapelet a = (NShapelet)removed.getFirst();
+//			if(a.numTwoShapelets()>1 && removed.getSecond()!= 0.0){
+//				System.out.println("found " +a+"with fiteness " +  removed.getSecond() );
+//			}
+			//System.out.println("removed " + removed.getFirst() + " with fitness " + removed.getSecond() + " from best");
 		}
 	}
 

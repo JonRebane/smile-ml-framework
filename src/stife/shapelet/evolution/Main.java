@@ -22,13 +22,15 @@ import stife.shapelet_size2.Shapelet_Size2;
 public class Main {
 
 	private static int epsilon = 5;
-	private static double p = 0.9;
+	private static int tournamentSize = 2;
+	private static double p = 1.0;
 	private static int populationSize = 100;
 	private static Random random = new Random(13);
+	private static int numGenerations = 100;
 
 	public static void main(String[] args) throws IOException{
 		//TODO: use secure random!
-		File testData = new File("data/singleLabelDatasets/AUSLAN2");
+		File testData = new File("data/singleLabelDatasets/HEPATITIS");
 		List<Sequence> database = IOService.readSequenceData(testData);
 		List<Integer> classes = IOService.readClassData(testData);
 		//mutator
@@ -40,9 +42,9 @@ public class Main {
 		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.02));
 		
 		WeightedCompositeMutator mutator = new WeightedCompositeMutator(random, operators );
-		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(populationSize/10, p, random);
+		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(tournamentSize, p, random);
 		FitnessEvaluator<NShapelet> evaluator = new NShapeletFitnessEvaluator(database, classes, epsilon );
-		EvolutionEngine<NShapelet> engine = new EvolutionEngine<>(populationSize , 100, mutator, selectionStrategy , evaluator , 75);
+		EvolutionEngine<NShapelet> engine = new EvolutionEngine<>(populationSize , numGenerations, mutator, selectionStrategy , evaluator , 75);
 		engine.runEvolution(getInitialGeneration(database));
 		engine.printBest();
 	}
