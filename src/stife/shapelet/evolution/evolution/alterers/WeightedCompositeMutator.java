@@ -22,11 +22,11 @@ public class WeightedCompositeMutator implements MutationStrategy<NShapelet> {
 	@Override
 	public NShapelet mutate(NShapelet t) {
 		int randomIndex = -1;
-		double random = Math.random() * totalWeight;
+		double weightedDiceThrow = random.nextDouble() * totalWeight;
 		for (int i = 0; i < operators.size(); ++i)
 		{
-		    random -= operators.get(i).getSecond();
-		    if (random <= 0.0d)
+			weightedDiceThrow -= operators.get(i).getSecond();
+		    if (weightedDiceThrow <= 0.0d)
 		    {
 		        randomIndex = i;
 		        break;

@@ -121,4 +121,10 @@ public class IOService {
 		}
 		return sequences;
 	}
+
+	public static void appendLineToFile(File file, String line) throws IOException {
+		PrintWriter pr = new PrintWriter(new FileWriter(file,true));
+		pr.println(line);
+		pr.close();
+	}
 }

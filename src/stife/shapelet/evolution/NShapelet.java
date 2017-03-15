@@ -1,6 +1,7 @@
 package stife.shapelet.evolution;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -13,6 +14,7 @@ public class NShapelet {
 
 	List<Integer> eventIds = new ArrayList<>();
 	List<Integer> relationships = new ArrayList<>();
+	public static Comparator<NShapelet> nShapeletComparator = (a,b) -> a.compareToOther(b);
 	
 	public NShapelet(Shapelet_Size2 basis){
 		eventIds.add(basis.getEventId1());
@@ -93,5 +95,35 @@ public class NShapelet {
 
 	public void setRelationship(int i, int newRelationship) {
 		relationships.set(i, newRelationship);
+	}
+
+	public boolean isEqualTo(NShapelet other) {
+		return relationships.equals(other.relationships) && eventIds.equals(other.eventIds);
+	}
+
+	public Integer compareToOther(NShapelet b) {
+		if(eventIds.size() > b.eventIds.size()){
+			return 1;
+		} else if(eventIds.size() < b.eventIds.size()){
+			return -1;
+		} 
+		for(int i=0;i<eventIds.size();i++){
+			if(eventIds.get(i)>b.eventIds.get(i)){
+				return 1;
+			} else if(eventIds.get(i)<b.eventIds.get(i)){
+				return -1;
+			}
+		}
+		//if we arrive here all event ids are equal
+		assert(relationships.size() == b.relationships.size());
+		for(int i=0;i<relationships.size();i++){
+			if(relationships.get(i)>b.relationships.get(i)){
+				return 1;
+			} else if(relationships.get(i)<b.relationships.get(i)){
+				return -1;
+			}
+		}
+		return 0;
+		
 	}
 }
