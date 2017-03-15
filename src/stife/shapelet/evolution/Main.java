@@ -27,7 +27,7 @@ public class Main {
 
 	private static int epsilon = 5;
 	private static int tournamentSize = 2;
-	private static double p = 0.7;
+	private static double p = 1.0;
 	private static int populationSize = 500;
 	private static int numFeatures = 75;
 	private static Random random = new Random(13);
