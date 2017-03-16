@@ -435,10 +435,56 @@ public class Sequence {
 			relevantPreviousIds = newPreviousIds;
 		}
 		return !relevantPreviousIds.isEmpty();
-		
-		
 	}
 
+	public List<List<Integer>> getAllOccurrences(NShapelet shapelet,int epsilon) {
+		List<Pair<Integer, Integer>> occurrences = shapelet.get2Shapelet(0).getAllOccurrences(this, epsilon);
+		List<List<Integer>> allOccurrences = occurrences.stream().map(p -> {
+			ArrayList<Integer> list = new ArrayList<Integer>();
+			list.add(p.getFirst());
+			list.add(p.getSecond());
+			return list;
+		}).collect(Collectors.toList());
+		for(int i=1;i<shapelet.numTwoShapelets();i++){
+			if(allOccurrences.isEmpty()){
+				return allOccurrences;
+			}
+			Map<Integer,List<List<Integer>>> occurrencesByLastIntervalId = allOccurrences.stream().collect(Collectors.groupingBy(l -> l.get(l.size()-1)));
+			ShapeletSize2 curShapelet = shapelet.get2Shapelet(i);
+			List<Integer> listOfPreviousIntervalIdSorted = occurrencesByLastIntervalId.keySet().stream().sorted().collect(Collectors.toList());
+			List<List<Integer>> newAllOccurrences = new ArrayList<>();
+			for(int intervalId : listOfPreviousIntervalIdSorted){
+				assert(getInterval(intervalId).getDimension()==curShapelet.getEventId1());
+				List<Integer> fittingIntervalIds = curShapelet.getOccurrences(this,intervalId, epsilon);
+				for(Integer toAppend : fittingIntervalIds){
+					List<List<Integer>> allOccurrencesToAppendTo = occurrencesByLastIntervalId.get(intervalId);
+					for(int j=0;j<allOccurrencesToAppendTo.size();j++){
+						//for each element in fitting intervalIds, add a new list
+						List<Integer> occurrence= allOccurrencesToAppendTo.get(j);
+						ArrayList<Integer> newOccurrence = new ArrayList<>(occurrence);
+						newOccurrence.add(toAppend);
+						newAllOccurrences.add(newOccurrence);
+					}
+				}
+			}
+			allOccurrences = newAllOccurrences;
+		}
+		//sort all Occurrences, so that we always get the same order in each execution:
+		Collections.sort(allOccurrences, (l1,l2) ->{
+			int i=0;
+			while(l1.get(i)==l2.get(i) && i<l1.size()){
+				i++;
+			}
+			if(i==l1.size()){
+				return 0;
+			} else{
+				return l1.get(i).compareTo(l2.get(i));
+			}
+		});
+		return allOccurrences;
+	}
+	
+	
 	/***
 	 * Returns all intervals that are within the bounds given to the function
 	 * @param startTimeInclusive
