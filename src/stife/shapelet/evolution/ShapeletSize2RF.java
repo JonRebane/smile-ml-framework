@@ -3,60 +3,64 @@ package stife.shapelet.evolution;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import data_structures.Sequence;
 import experiment.classifier.ClassificationException;
 import experiment.classifier.STIClassifier;
 import stife.distance.exceptions.InvalidEventTableDimensionException;
 import stife.distance.exceptions.TimeScaleException;
-import stife.static_metrics.StaticFeatureMatrix;
+import stife.shapelet_size2.ShapeletExtractor;
+import stife.shapelet_size2.ShapeletFeatureMatrix;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.CSVLoader;
-import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.NumericToNominal;
 
-public class ShapeletRf extends AbstractRF implements STIClassifier<Integer> {
-	
+public class ShapeletSize2RF extends AbstractRF implements STIClassifier<Integer> {
+
+	private int epsilon;
 	private RandomForest rf;
 	private FastVector allAttributes;
-	private Attribute classAttribute;
 	private Instances trainInstances;
-	private int epsilon;
-	private List<NShapelet> nShapelets;
+	private Attribute classAttribute;
+	ShapeletFeatureMatrix matrix;
 
-	public ShapeletRf(List<NShapelet> nShapelets,List<Sequence> train,List<Integer> classIds,int epsilon) throws Exception{
-		this.nShapelets = nShapelets;
+
+	public ShapeletSize2RF(List<Sequence> train,List<Integer> classIds, int numDimensions,int epsilon,int numFeatures) throws Exception {
+		ExhaustiveShapeletSize2FeatureExtractor extractor = new ExhaustiveShapeletSize2FeatureExtractor();
+		matrix = extractor.extract(train,classIds,numDimensions,epsilon,numFeatures);
+		short[][] features = matrix.getMatrix();
 		this.epsilon = epsilon;
 		rf = new RandomForest();
-		trainInstances = buildInstances(train, classIds, nShapelets, "testdata" + File.separator + "stifeTrainData.csv");
+		trainInstances = buildInstances(train, classIds, features, "testdata" + File.separator + "stifeTrainData.csv");
 		allAttributes = prepareRf(rf,trainInstances,allAttributes);
 		classAttribute = trainInstances.classAttribute();
 	}
 	
-	private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, List<NShapelet> nShapelets, String tempFilePath) throws Exception {
+	private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, short[][] features, String tempFilePath) throws Exception {
 		PrintStream out = new PrintStream(new File(tempFilePath));
-		for(int col = 0;col<=nShapelets.size();col++){
+		for(int col = 0;col<=features[0].length;col++){
 			out.print("Col_"+col);
-			if(col!=nShapelets.size()){
+			if(col!=features[0].length){
 				out.print(",");
 			} else{
 				out.println();
 			}
 		}
-		for(int row = 0;row<sequences.size();row++){
-			Sequence curSequence = sequences.get(row);
+		for(int row = 0;row<features.length;row++){
 			out.print(classIds.get(row)+",");
-			for(int col = 0;col<nShapelets.size();col++){
-				boolean value = curSequence.containsNSHapelet(nShapelets.get(col), epsilon);
-				double val = value ? 1.0 : 0.0;
+			for(int col = 0;col<features[0].length;col++){
+				double val = features[row][col];
 				out.print(val);
-				if(col!= nShapelets.size()-1){
+				if(col!= features[0].length-1){
 					out.print(",");
 				}
 			}
@@ -69,15 +73,17 @@ public class ShapeletRf extends AbstractRF implements STIClassifier<Integer> {
 	    return instances;
 	}
 	
+	
 	@Override
 	public Integer classify(Sequence sequence) throws TimeScaleException, InvalidEventTableDimensionException,
 			ClassificationException, IOException, Exception {
 		Sequence mySeq = new Sequence(sequence);
 		mySeq.sortIntervals();
-		double[] features = new double[nShapelets.size()];
-		for(int col = 0;col<nShapelets.size();col++){
-			boolean value = sequence.containsNSHapelet(nShapelets.get(col), epsilon);
-			features[col] = value ? 1.0 : 0.0;
+		int numCols = matrix.getMatrix()[0].length;
+		double[] features = new double[numCols];
+		for(int col = 0;col<numCols;col++){
+			double value = sequence.countShapeletOccurance(matrix.getShapeletOfColumn(col), epsilon);
+			features[col] = value;
 		}
 		Instance instance = prepareInstance(features, allAttributes, classAttribute);
 		int predictedClass;

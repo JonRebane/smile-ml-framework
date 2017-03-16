@@ -3,6 +3,7 @@ package stife.shapelet.evolution;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -30,13 +31,23 @@ public class Main {
 	private static double p = 1.0;
 	private static int populationSize = 500;
 	private static int numFeatures = 75;
-	private static Random random = new Random(13);
+	private static Random random;
 	private static int numGenerations = 200;
 	private static File experimentResultFile = new File("experimentResults/shapeletEvolutionResult.csv");
 
 	public static void main(String[] args) throws Exception{
 		//TODO: use secure random!
-		String datasetName = "HEPATITIS";
+		List<File> allFiles = Arrays.stream(new File("data/singleLabelDatasets/").listFiles()).collect(Collectors.toList());
+		for(File file :allFiles){
+			random = new Random(13);
+			System.out.println("starting " + file.getName());
+			runExperiment(file.getName());
+		}
+		
+	}
+
+	private static void runExperiment(String datasetName) throws IOException, Exception, TimeScaleException,
+			InvalidEventTableDimensionException, ClassificationException {
 		File testData = new File("data/singleLabelDatasets/"+datasetName);
 		List<Sequence> database = IOService.readSequenceData(testData);
 		List<Integer> classIds = IOService.readClassData(testData);
@@ -50,11 +61,34 @@ public class Main {
 		for(int i=0;i<k;i++){
 			ExperimentResult result = executeFold(database, classIds, operators, maxEventLabel, allIndices, i,k);
 			allResults.add(result);
+			result.setExhaustiveAccuracy(executeExhaustiveFold(database,classIds,maxEventLabel,allIndices,i,k));
 		}
 		double avgEvolvedAccuracy = allResults.stream().mapToDouble(d -> d.getEvolvedAccuracy()).average().getAsDouble();
 		double avgExhaustiveAccuracy = allResults.stream().mapToDouble(d -> d.getExhaustiveAccuracy()).average().getAsDouble();
 		double avgNum2Shapelets = allResults.stream().mapToInt(d -> d.getNumSize2ShapeletsInEvolved()).average().getAsDouble();
 		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets);
+	}
+
+	private static double executeExhaustiveFold(List<Sequence> database, List<Integer> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
+		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
+		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
+		List<Integer> trainClassIds = ExperimentUtil.getAll(classIds,trainIndices);
+		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
+		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
+		List<Integer> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
+		ShapeletSize2RF a = new ShapeletSize2RF(train,trainClassIds,maxEventLabel,epsilon,numFeatures);
+		int numCorrect = 0;
+		System.out.println(testIndices);
+		for(int i=0;i<test.size();i++){
+			Integer result = a.classify(test.get(i));
+			Integer actualClass = testClassIds.get(i);
+			if(result == actualClass){
+				numCorrect++;
+			}
+		}
+		double accuracy = numCorrect / ((double) test.size());
+		System.out.println("accuracy: " + accuracy);
+		return accuracy;
 	}
 
 	private static void appendToResultFile(String datasetName,double evolvedAccuracy,double exhaustiveAccuracy,double numSize2ShapeletsInEvolved) throws IOException {
@@ -98,7 +132,7 @@ public class Main {
 		FitnessEvaluator<NShapelet> evaluator = new NShapeletFitnessEvaluator(train, trainClassIds, epsilon );
 		EvolutionEngine<NShapelet> engine = new EvolutionEngine<>(populationSize , numGenerations, mutator, selectionStrategy , evaluator , numFeatures,NShapelet.nShapeletComparator);
 		engine.runEvolution(getInitialGeneration(train));
-		ShapeletRf a = new ShapeletRf(engine.getBestFeatures(),train,trainClassIds,epsilon);
+		AbstractRF a = new ShapeletRf(engine.getBestFeatures(),train,trainClassIds,epsilon);
 		int numCorrect = 0;
 		System.out.println(testIndices);
 		for(int i=0;i<test.size();i++){
