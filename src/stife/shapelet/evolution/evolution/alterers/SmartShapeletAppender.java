@@ -29,9 +29,10 @@ public class SmartShapeletAppender implements MutationStrategy<NShapelet> {
 			List<List<Integer>> alloccurrences = seq.getAllOccurrences(t, epsilon);
 			if(!alloccurrences.isEmpty()){
 				//find something that can be appended to this shapelet and occurs at least once in this sequence
-				chosenOccurrence = //TODO: chose occurrence
+				//chosenOccurrence = //TODO: chose occurrence
 			}
 		}
+		return null; //TODO: finish implementation
 	}
 
 }
