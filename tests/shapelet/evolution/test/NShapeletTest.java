@@ -15,6 +15,82 @@ import stife.shapelet_size2_new.ShapeletSize2;
 public class NShapeletTest {
 
 	private static int epsilon = 5;
+	
+	Sequence hepatitisSeq1 = new Sequence(Arrays.asList(
+			new Interval(29,1,108),
+			new Interval(20,1,122),
+			new Interval(37,1,150),
+			new Interval(1,1,150),
+			new Interval(23,1,150),
+			new Interval(4,1,150),
+			new Interval(12,1,150),
+			new Interval(6,1,150),
+			new Interval(11,1,150),
+			new Interval(58,1,150),
+			new Interval(59,1,150),
+			new Interval(16,1,150),
+			new Interval(7,1,150),
+			new Interval(19,1,150),
+			new Interval(3,1,150),
+			new Interval(13,1,150),
+			new Interval(10,1,150),
+			new Interval(17,1,150),
+			new Interval(8,1,150),
+			new Interval(9,1,150),
+			new Interval(22,1,150),
+			new Interval(21,1,150),
+			new Interval(33,1,150),
+			new Interval(34,1,150),
+			new Interval(35,1,150),
+			new Interval(2,122,150)));
+	
+	Sequence hepatitisSeq342 = new Sequence(Arrays.asList(
+			new Interval(11,1,50),
+			new Interval(27,1,50),
+			new Interval(2,1,50),
+			new Interval(12,1,134),
+			new Interval(2,1,169),
+			new Interval(33,1,260),
+			new Interval(15,1,288),
+			new Interval(4,1,316),
+			new Interval(3,1,316),
+			new Interval(23,1,421),
+			new Interval(17,1,421),
+			new Interval(35,1,421),
+			new Interval(37,1,540),
+			new Interval(14,1,540),
+			new Interval(6,1,540),
+			new Interval(18,1,540),
+			new Interval(16,1,540),
+			new Interval(19,1,540),
+			new Interval(3,1,540),
+			new Interval(13,1,540),
+			new Interval(10,1,540),
+			new Interval(9,1,540),
+			new Interval(45,1,540),
+			new Interval(21,22,260),
+			new Interval(34,22,421),
+			new Interval(8,106,260),
+			new Interval(6,106,316),
+			new Interval(27,134,456),
+			new Interval(12,197,260),
+			new Interval(2,232,456),
+			new Interval(11,288,316),
+			new Interval(47,288,393),
+			new Interval(51,316,337),
+			new Interval(8,316,421),
+			new Interval(33,316,421),
+			new Interval(9,337,358),
+			new Interval(1,337,358),
+			new Interval(12,337,540),
+			new Interval(4,358,540),
+			new Interval(15,358,540),
+			new Interval(11,393,456),
+			new Interval(3,393,540),
+			new Interval(21,421,540),
+			new Interval(6,484,540),
+			new Interval(36,484,540),
+			new Interval(56,484,540)));
 
 	@Test
 	public void simpleTestNegative() {
@@ -84,13 +160,62 @@ public class NShapeletTest {
 	}
 	
 	@Test
-	public void doubleCountTest2(){
+	public void doubleCountMatchTest(){
 		NShapelet shapelet = new NShapelet(Arrays.asList(1,1), Arrays.asList(ShapeletSize2.MATCH));
 		Sequence seq = new Sequence(Arrays.asList(
-				new Interval(1,1,10)));
+				new Interval(1,1,10),
+				new Interval(1,2,12)));
 		List<List<Integer>> occurrences = seq.getAllOccurrences(shapelet, epsilon);
-		assertEquals(0,occurrences.size());
-		//TODO: make such a test for all two shapelets! (maybe for jason?)
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void doubleCountOverlapTest(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(1,1), Arrays.asList(ShapeletSize2.OVERLAP));
+		Sequence seq = new Sequence(Arrays.asList(
+				new Interval(1,1,30),
+				new Interval(1,15,48)));
+		List<List<Integer>> occurrences = seq.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void doubleCountMeetTest(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(1,1), Arrays.asList(ShapeletSize2.MEET));
+		Sequence seq = new Sequence(Arrays.asList(
+				new Interval(1,1,30),
+				new Interval(1,32,48)));
+		List<List<Integer>> occurrences = seq.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	
+	@Test
+	public void simpleHepatitis1Test(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(20,29,2), Arrays.asList(ShapeletSize2.LEFTCONTAINS, ShapeletSize2.FOLLOWEDBY));
+		List<List<Integer>> occurrences = hepatitisSeq1.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void simpleHepatitis1Test2(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(37,6), Arrays.asList(ShapeletSize2.MATCH));
+		List<List<Integer>> occurrences = hepatitisSeq1.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+
+	@Test
+	public void simpleHepatitis1Test3(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(11,2), Arrays.asList(ShapeletSize2.RGHTCONTAINS));
+		List<List<Integer>> occurrences = hepatitisSeq1.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void simpleHepatitis342Test1(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(6,2,11,36), Arrays.asList(ShapeletSize2.OVERLAP, ShapeletSize2.RGHTCONTAINS, ShapeletSize2.FOLLOWEDBY));
+		List<List<Integer>> occurrences = hepatitisSeq342.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
 	}
 
 }
