@@ -218,4 +218,26 @@ public class NShapeletTest {
 		assertEquals(1,occurrences.size());
 	}
 
+	@Test
+	public void simpleHepatitis342Test2(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(27,6,8), Arrays.asList(ShapeletSize2.FOLLOWEDBY, ShapeletSize2.LEFTCONTAINS));
+		List<List<Integer>> occurrences = hepatitisSeq342.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void simpleHepatitis342Test3(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(27,2,11), Arrays.asList(ShapeletSize2.MATCH, ShapeletSize2.MATCH));
+		List<List<Integer>> occurrences = hepatitisSeq342.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
+	@Test
+	public void simpleHepatitis342Test4(){
+		// FIXME problem with meet, does not identify the 51 MEETS 9 shapelet 
+		NShapelet shapelet = new NShapelet(Arrays.asList(51,9,1), Arrays.asList(ShapeletSize2.MEET, ShapeletSize2.MATCH));
+		List<List<Integer>> occurrences = hepatitisSeq342.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
 }
