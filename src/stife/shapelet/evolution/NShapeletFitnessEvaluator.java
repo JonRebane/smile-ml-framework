@@ -20,13 +20,9 @@ public class NShapeletFitnessEvaluator implements FitnessEvaluator<NShapelet> {
 	
 	@Override
 	public double getFitness(NShapelet t) {
-		short[] occurrenceFeature = new short[database.size()];
+		int[] occurrenceFeature = new int[database.size()];
 		for(int i=0;i<database.size();i++){
-			if(database.get(i).containsNSHapelet(t,epsilon)){
-				occurrenceFeature[i] = 1;
-			} else{
-				occurrenceFeature[i] = 0;
-			}
+			occurrenceFeature[i] = database.get(i).getAllOccurrences(t, epsilon).size();
 		}
 		return FeatureSelection.calcInfoGain(occurrenceFeature, classIds);
 	}

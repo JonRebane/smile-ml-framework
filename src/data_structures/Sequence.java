@@ -463,7 +463,10 @@ public class Sequence {
 						List<Integer> occurrence= allOccurrencesToAppendTo.get(j);
 						ArrayList<Integer> newOccurrence = new ArrayList<>(occurrence);
 						newOccurrence.add(toAppend);
-						newAllOccurrences.add(newOccurrence);
+						if(new HashSet<>(newOccurrence).size()==newOccurrence.size()){
+							//only occurrences with each interval being used only once are allowed
+							newAllOccurrences.add(newOccurrence);
+						}
 					}
 				}
 			}
@@ -523,6 +526,13 @@ public class Sequence {
 	@Override
 	public String toString(){
 		return intervals.toString();
+	}
+
+	public int getRelationship(int intervalId1, int intervalId2, int epsilon) {
+		assert(intervalId2>intervalId1);
+		Interval a = getInterval(intervalId1);
+		Interval b = getInterval(intervalId2);
+		return getRelationship(a.getStart(),a.getEnd(),b.getStart(),b.getEnd(),epsilon)-1; //-1 due to getRelationship being a different interface that stupidly starts counting at 1 (relly should fix that)
 	}
 
 }

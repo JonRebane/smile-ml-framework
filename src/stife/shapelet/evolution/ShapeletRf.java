@@ -53,8 +53,7 @@ public class ShapeletRf extends AbstractRF implements STIClassifier<Integer> {
 			Sequence curSequence = sequences.get(row);
 			out.print(classIds.get(row)+",");
 			for(int col = 0;col<nShapelets.size();col++){
-				boolean value = curSequence.containsNSHapelet(nShapelets.get(col), epsilon);
-				double val = value ? 1.0 : 0.0;
+				double val = curSequence.getAllOccurrences(nShapelets.get(col), epsilon).size();
 				out.print(val);
 				if(col!= nShapelets.size()-1){
 					out.print(",");
@@ -76,8 +75,8 @@ public class ShapeletRf extends AbstractRF implements STIClassifier<Integer> {
 		mySeq.sortIntervals();
 		double[] features = new double[nShapelets.size()];
 		for(int col = 0;col<nShapelets.size();col++){
-			boolean value = sequence.containsNSHapelet(nShapelets.get(col), epsilon);
-			features[col] = value ? 1.0 : 0.0;
+			double val = sequence.getAllOccurrences(nShapelets.get(col), epsilon).size();
+			features[col] = val;
 		}
 		Instance instance = prepareInstance(features, allAttributes, classAttribute);
 		int predictedClass;

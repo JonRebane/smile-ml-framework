@@ -21,6 +21,7 @@ import stife.shapelet.evolution.evolution.alterers.ShapeletAppender;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndEventMutator;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndRelationshipMutator;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndRemover;
+import stife.shapelet.evolution.evolution.alterers.SmartShapeletAppender;
 import stife.shapelet.evolution.evolution.alterers.WeightedCompositeMutator;
 import stife.shapelet_size2.Shapelet_Size2;
 
@@ -122,7 +123,7 @@ public class Main {
 		List<Integer> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
 		
 		
-		operators.add(new Pair<>(new ShapeletAppender(random, maxEventLabel ),  0.25));
+		operators.add(new Pair<>(new SmartShapeletAppender(train,random, maxEventLabel,epsilon ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndEventMutator(random, maxEventLabel ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRelationshipMutator(random),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.25));

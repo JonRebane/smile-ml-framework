@@ -57,6 +57,31 @@ public class FeatureSelection {
 		return bestGain;
 	}
 	
+	/***
+	 * Calculates the information gain for a numeric attribute, given it's classes
+	 * @param numericAttribute
+	 * @param classIds
+	 * @return
+	 */
+	public static double calcInfoGain(int[] numericAttribute,List<Integer> classIds) {
+		assert(numericAttribute.length == classIds.size());
+		Integer[] order = getColumnSortedIndices(numericAttribute);
+		//find the best splitting point
+		double bestGain = 0;
+		double entropy = calcEntropy(classIds);
+		for(int i=0;i<order.length-1;i++){
+			if(numericAttribute[order[i]] != numericAttribute[order[i+1]]){
+				double splitVal = (numericAttribute[order[i]] + numericAttribute[order[i+1]])/2.0;
+				boolean[] curSplit = columnSmallerOrEqualThan(numericAttribute,splitVal);
+				double curGain = entropy - infoAfterSplit(curSplit,classIds);
+				if(curGain>bestGain){
+					bestGain = curGain;
+				}
+			}
+		}
+		return bestGain;
+	}
+	
 	//just public so we can unit-test
 	public static double infoAfterSplit(boolean[] booleanAttribute, List<Integer> classIds) {
 		List<Integer> classOfTrue = new LinkedList<>();
@@ -79,6 +104,14 @@ public class FeatureSelection {
 		}
 		return out;
 	}
+	
+	private static boolean[] columnSmallerOrEqualThan(int[] numericAttribute, double splitVal) {
+		boolean[] out = new boolean[numericAttribute.length];
+		for(int i=0;i<numericAttribute.length;i++){
+			out[i] = numericAttribute[i] <= splitVal;
+		}
+		return out;
+	}
 
 	/***
 	 * returns the indices, which represent the order of the input array For example getColumnSortedIndices([20,30,1,54,43]) would return [2,0,1,4,3]
@@ -94,6 +127,25 @@ public class FeatureSelection {
 		Arrays.sort(indices, new Comparator<Integer>() {
 		    @Override public int compare(final Integer o1, final Integer o2) {
 		        return Short.compare(column[o1], column[o2]);
+		    }
+		});
+		return indices;
+	}
+	
+	/***
+	 * returns the indices, which represent the order of the input array For example getColumnSortedIndices([20,30,1,54,43]) would return [2,0,1,4,3]
+	 * only public so we can unit-test!
+	 * @param column
+	 * @return
+	 */
+	public static Integer[] getColumnSortedIndices(int[] column) {
+		Integer[] indices = new Integer[column.length];
+		for(int i=0;i<indices.length;i++){
+			indices[i] = i;
+		}
+		Arrays.sort(indices, new Comparator<Integer>() {
+		    @Override public int compare(final Integer o1, final Integer o2) {
+		        return Integer.compare(column[o1], column[o2]);
 		    }
 		});
 		return indices;
