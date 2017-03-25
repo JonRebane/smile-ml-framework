@@ -44,7 +44,30 @@ public class Main {
 			System.out.println("starting " + file.getName());
 			runExperiment(file.getName());
 		}
+		allFiles = Arrays.stream(new File("data/multiLabelDatasets/").listFiles()).collect(Collectors.toList());
+		for(File file :allFiles){
+			random = new Random(13);
+			System.out.println("starting " + file.getName());
+			runMultiClassExperiment(file.getName());
+		}
 		
+	}
+
+	private static void runMultiClassExperiment(String datasetName) throws TimeScaleException, InvalidEventTableDimensionException, ClassificationException, Exception {
+		File testData = new File("data/multiLabelDatasets/"+datasetName);
+		List<Sequence> sequences = IOService.readMultiLabelSequenceData(testData);
+		List<List<Integer>> rawClassIds = IOService.readMultiLabelClassData(testData);
+		assert(sequences.size()==rawClassIds.size());
+		List<Sequence> database = new ArrayList<>();
+		List<Integer> classIds = new ArrayList<>();
+		for(int i=0;i<database.size();i++){
+			List<Integer> curClassIds = rawClassIds.get(i);
+			for(int classId : curClassIds){
+				database.add(new Sequence(sequences.get(i)));
+				classIds.add(classId);//TODO: it does not work like this, it is more annoying...
+			}
+		}
+		runExperiment(datasetName, database, classIds);
 	}
 
 	private static void runExperiment(String datasetName) throws IOException, Exception, TimeScaleException,
@@ -52,6 +75,12 @@ public class Main {
 		File testData = new File("data/singleLabelDatasets/"+datasetName);
 		List<Sequence> database = IOService.readSequenceData(testData);
 		List<Integer> classIds = IOService.readClassData(testData);
+		runExperiment(datasetName, database, classIds);
+	}
+
+	private static void runExperiment(String datasetName, List<Sequence> database, List<Integer> classIds)
+			throws Exception, TimeScaleException, InvalidEventTableDimensionException, ClassificationException,
+			IOException {
 		//mutator
 		List<Pair<MutationStrategy<NShapelet>, Double>> operators = new ArrayList<>();
 		int maxEventLabel = Sequence.getDimensionSet(database).descendingIterator().next();
@@ -59,15 +88,25 @@ public class Main {
 		List<Integer> allIndices = ExperimentUtil.getShuffledIndices(database, random);
 		int k=10;
 		ArrayList<ExperimentResult> allResults = new ArrayList<>();
+		double avgEvolvedTime = 0.0;
+		double avgExhaustiveTime = 0.0;
 		for(int i=0;i<k;i++){
+			long before = ExperimentUtil.getCpuTime();
 			ExperimentResult result = executeFold(database, classIds, operators, maxEventLabel, allIndices, i,k);
+			long after = ExperimentUtil.getCpuTime();
+			avgEvolvedTime += after-before;
 			allResults.add(result);
+			before = ExperimentUtil.getCpuTime();
 			result.setExhaustiveAccuracy(executeExhaustiveFold(database,classIds,maxEventLabel,allIndices,i,k));
+			after = ExperimentUtil.getCpuTime();
+			avgExhaustiveTime += after-before;
 		}
+		avgEvolvedTime = avgEvolvedTime/k;
+		avgExhaustiveTime = avgExhaustiveTime/k;
 		double avgEvolvedAccuracy = allResults.stream().mapToDouble(d -> d.getEvolvedAccuracy()).average().getAsDouble();
 		double avgExhaustiveAccuracy = allResults.stream().mapToDouble(d -> d.getExhaustiveAccuracy()).average().getAsDouble();
 		double avgNum2Shapelets = allResults.stream().mapToInt(d -> d.getNumSize2ShapeletsInEvolved()).average().getAsDouble();
-		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets);
+		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets,avgEvolvedTime,avgExhaustiveTime);
 	}
 
 	private static double executeExhaustiveFold(List<Sequence> database, List<Integer> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
@@ -92,9 +131,9 @@ public class Main {
 		return accuracy;
 	}
 
-	private static void appendToResultFile(String datasetName,double evolvedAccuracy,double exhaustiveAccuracy,double numSize2ShapeletsInEvolved) throws IOException {
+	private static void appendToResultFile(String datasetName,double evolvedAccuracy,double exhaustiveAccuracy,double numSize2ShapeletsInEvolved, double avgEvolvedTime, double avgExhaustiveTime) throws IOException {
 		if(!experimentResultFile.exists()){
-			String header = "dataset,populationSize,numGenerations,numFeatures,avgNumSize2ShapeletsInEvolved,tournamentSize,tournamentP,epsilon,evolvedRFAccuracy,exhaustiveRFAccuracy";
+			String header = "dataset,populationSize,numGenerations,numFeatures,avgNumSize2ShapeletsInEvolved,tournamentSize,tournamentP,epsilon,evolvedRFAccuracy,exhaustiveRFAccuracy,avgEvolvedTime,avgExhaustiveTime";
 			IOService.appendLineToFile(experimentResultFile,header);
 		}
 		String results = datasetName + ","
@@ -106,9 +145,10 @@ public class Main {
 				+ p + ","
 				+ epsilon + ","
 				+ evolvedAccuracy + ","
-				+ exhaustiveAccuracy;
+				+ exhaustiveAccuracy + ","
+				+ avgEvolvedTime + ","
+				+ avgExhaustiveTime;
 		IOService.appendLineToFile(experimentResultFile,results);
-		
 	}
 
 	private static ExperimentResult executeFold(List<Sequence> database, List<Integer> classIds,
