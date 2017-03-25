@@ -25,18 +25,18 @@ public class Meets extends AbstractShapeletSize2 {
 		int endTime = first.getEnd();
 		//look forward:
 		List<Integer> allOccurrences = new ArrayList<>();
-		while(curIntervalId <sequence.intervalCount() && isEqualWithTolerance(endTime , sequence.getInterval(curIntervalId).getStart(), epsilon)){
+		while(curIntervalId <sequence.intervalCount() && sequence.getInterval(curIntervalId).getStart() < endTime+epsilon){
 			Interval curInterval = sequence.getInterval(curIntervalId);
-			if(curInterval.getDimension()==getEventId2()){
+			if(curInterval.getDimension()==getEventId2() && isEqualWithTolerance(endTime , curInterval.getStart(), epsilon)){
 				allOccurrences.add(curIntervalId);
 			}
 			curIntervalId++;
 		}
 		//look backwards:
 		curIntervalId = intervalId-1;
-		while(curIntervalId >0 && isEqualWithTolerance(endTime , sequence.getInterval(curIntervalId).getStart(), epsilon)){
+		while(curIntervalId >0 && sequence.getInterval(curIntervalId).getStart() > endTime-epsilon){
 			Interval curInterval = sequence.getInterval(curIntervalId);
-			if(curInterval.getDimension()==getEventId2()){
+			if(curInterval.getDimension()==getEventId2() && isEqualWithTolerance(endTime , curInterval.getStart(), epsilon)){
 				allOccurrences.add(curIntervalId);
 			}
 			curIntervalId--;
