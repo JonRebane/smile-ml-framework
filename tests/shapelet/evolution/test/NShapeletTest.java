@@ -240,4 +240,11 @@ public class NShapeletTest {
 		assertEquals(1,occurrences.size());
 	}
 	
+	@Test
+	public void simpleHepatitis342Test5(){
+		NShapelet shapelet = new NShapelet(Arrays.asList(1,15), Arrays.asList(ShapeletSize2.MEET));
+		List<List<Integer>> occurrences = hepatitisSeq342.getAllOccurrences(shapelet, epsilon);
+		assertEquals(1,occurrences.size());
+	}
+	
 }
