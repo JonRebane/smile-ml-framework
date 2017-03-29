@@ -475,7 +475,7 @@ public class Sequence {
 		//sort all Occurrences, so that we always get the same order in each execution:
 		Collections.sort(allOccurrences, (l1,l2) ->{
 			int i=0;
-			while(l1.get(i)==l2.get(i) && i<l1.size()){
+			while(l1.get(i).compareTo(l2.get(i))==0 && i<l1.size()){
 				i++;
 			}
 			if(i==l1.size()){

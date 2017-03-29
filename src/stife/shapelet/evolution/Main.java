@@ -21,6 +21,7 @@ import stife.shapelet.evolution.evolution.alterers.ShapeletAppender;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndEventMutator;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndRelationshipMutator;
 import stife.shapelet.evolution.evolution.alterers.ShapeletEndRemover;
+import stife.shapelet.evolution.evolution.alterers.ShapeletResetter;
 import stife.shapelet.evolution.evolution.alterers.SmartShapeletAppender;
 import stife.shapelet.evolution.evolution.alterers.WeightedCompositeMutator;
 import stife.shapelet_size2.Shapelet_Size2;
@@ -35,45 +36,39 @@ public class Main {
 	private static Random random;
 	private static int numGenerations = 200;
 	private static File experimentResultFile = new File("experimentResults/shapeletEvolutionResult.csv");
+	private static int sequenceDuration;
 
 	public static void main(String[] args) throws Exception{
 		//TODO: use secure random!
 		List<File> allFiles = Arrays.stream(new File("data/singleLabelDatasets/").listFiles()).collect(Collectors.toList());
 		for(File file :allFiles){
-			random = new Random(13);
-			System.out.println("starting " + file.getName());
-			runExperiment(file.getName());
+//			if(!Arrays.asList("AUSLAN2","BLOCKS","CONTEXT").contains(file.getName())){
+				random = new Random(13);
+				System.out.println("starting " + file.getName());
+				runExperiment(file.getName());
+//			}
 		}
 		allFiles = Arrays.stream(new File("data/multiLabelDatasets/").listFiles()).collect(Collectors.toList());
-		for(File file :allFiles){
-			random = new Random(13);
-			System.out.println("starting " + file.getName());
-			runMultiClassExperiment(file.getName());
-		}
-		
+//		for(File file :allFiles){
+//			random = new Random(13);
+//			System.out.println("starting " + file.getName());
+//			runMultiClassExperiment(file.getName());
+//		}
 	}
 
 	private static void runMultiClassExperiment(String datasetName) throws TimeScaleException, InvalidEventTableDimensionException, ClassificationException, Exception {
 		File testData = new File("data/multiLabelDatasets/"+datasetName);
-		List<Sequence> sequences = IOService.readMultiLabelSequenceData(testData);
-		List<List<Integer>> rawClassIds = IOService.readMultiLabelClassData(testData);
-		assert(sequences.size()==rawClassIds.size());
-		List<Sequence> database = new ArrayList<>();
-		List<Integer> classIds = new ArrayList<>();
-		for(int i=0;i<database.size();i++){
-			List<Integer> curClassIds = rawClassIds.get(i);
-			for(int classId : curClassIds){
-				database.add(new Sequence(sequences.get(i)));
-				classIds.add(classId);//TODO: it does not work like this, it is more annoying...
-			}
-		}
-		runExperiment(datasetName, database, classIds);
+		List<Sequence> database = IOService.readMultiLabelSequenceData(testData);
+		sequenceDuration = Sequence.getMaxDuration(database);
+		List<List<Integer>> classIds = IOService.readMultiLabelClassData(testData);
+		runMultiClassExperiment(datasetName, database, classIds);
 	}
 
 	private static void runExperiment(String datasetName) throws IOException, Exception, TimeScaleException,
 			InvalidEventTableDimensionException, ClassificationException {
 		File testData = new File("data/singleLabelDatasets/"+datasetName);
 		List<Sequence> database = IOService.readSequenceData(testData);
+		sequenceDuration = Sequence.getMaxDuration(database);
 		List<Integer> classIds = IOService.readClassData(testData);
 		runExperiment(datasetName, database, classIds);
 	}
@@ -88,35 +83,58 @@ public class Main {
 		List<Integer> allIndices = ExperimentUtil.getShuffledIndices(database, random);
 		int k=10;
 		ArrayList<ExperimentResult> allResults = new ArrayList<>();
-		double avgEvolvedTime = 0.0;
-		double avgExhaustiveTime = 0.0;
+
 		for(int i=0;i<k;i++){
-			long before = ExperimentUtil.getCpuTime();
 			ExperimentResult result = executeFold(database, classIds, operators, maxEventLabel, allIndices, i,k);
-			long after = ExperimentUtil.getCpuTime();
-			avgEvolvedTime += after-before;
 			allResults.add(result);
-			before = ExperimentUtil.getCpuTime();
-			result.setExhaustiveAccuracy(executeExhaustiveFold(database,classIds,maxEventLabel,allIndices,i,k));
-			after = ExperimentUtil.getCpuTime();
-			avgExhaustiveTime += after-before;
+			//ExperimentResult exhaustiveResult = executeExhaustiveFold(database,classIds,maxEventLabel,allIndices,i,k);
+			//result.setExhaustiveAccuracy(exhaustiveResult.getExhaustiveAccuracy());
+			//result.setExhaustiveTrainingTime(exhaustiveResult.getExhaustiveTrainingTime());
 		}
-		avgEvolvedTime = avgEvolvedTime/k;
-		avgExhaustiveTime = avgExhaustiveTime/k;
 		double avgEvolvedAccuracy = allResults.stream().mapToDouble(d -> d.getEvolvedAccuracy()).average().getAsDouble();
 		double avgExhaustiveAccuracy = allResults.stream().mapToDouble(d -> d.getExhaustiveAccuracy()).average().getAsDouble();
 		double avgNum2Shapelets = allResults.stream().mapToInt(d -> d.getNumSize2ShapeletsInEvolved()).average().getAsDouble();
+		double avgEvolvedTime = allResults.stream().mapToLong(r -> r.getTrainingTime()).average().getAsDouble();
+		double avgExhaustiveTime = allResults.stream().mapToLong(r -> r.getExhaustiveTrainingTime()).average().getAsDouble();
 		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets,avgEvolvedTime,avgExhaustiveTime);
 	}
 
-	private static double executeExhaustiveFold(List<Sequence> database, List<Integer> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
+	private static void runMultiClassExperiment(String datasetName, List<Sequence> database, List<List<Integer>> classIds)
+			throws Exception, TimeScaleException, InvalidEventTableDimensionException, ClassificationException,
+			IOException {
+		//mutator
+		List<Pair<MutationStrategy<NShapelet>, Double>> operators = new ArrayList<>();
+		int maxEventLabel = Sequence.getDimensionSet(database).descendingIterator().next();
+		//training and test data split
+		List<Integer> allIndices = ExperimentUtil.getShuffledIndices(database, random);
+		int k=10;
+		ArrayList<ExperimentResult> allResults = new ArrayList<>();
+		for(int i=0;i<k;i++){
+			ExperimentResult result = executeMultiClassFold(database, classIds, operators, maxEventLabel, allIndices, i,k);
+			allResults.add(result);
+			//ExperimentResult exhaustiveResult = executeMultiClassExhaustiveFold(database,classIds,maxEventLabel,allIndices,i,k);
+			//result.setExhaustiveAccuracy(exhaustiveResult.getExhaustiveAccuracy());
+			//result.setExhaustiveTrainingTime(exhaustiveResult.getExhaustiveTrainingTime());
+		}
+		double avgEvolvedAccuracy = allResults.stream().mapToDouble(d -> d.getEvolvedAccuracy()).average().getAsDouble();
+		double avgExhaustiveAccuracy = allResults.stream().mapToDouble(d -> d.getExhaustiveAccuracy()).average().getAsDouble();
+		double avgNum2Shapelets = allResults.stream().mapToInt(d -> d.getNumSize2ShapeletsInEvolved()).average().getAsDouble();
+		double avgEvolvedTime = allResults.stream().mapToLong(r -> r.getTrainingTime()).average().getAsDouble();
+		double avgExhaustiveTime = allResults.stream().mapToLong(r -> r.getExhaustiveTrainingTime()).average().getAsDouble();
+		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets,avgEvolvedTime,avgExhaustiveTime);
+	}
+
+	
+	private static ExperimentResult executeExhaustiveFold(List<Sequence> database, List<Integer> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
 		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
 		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
 		List<Integer> trainClassIds = ExperimentUtil.getAll(classIds,trainIndices);
 		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
 		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
 		List<Integer> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
+		long before = ExperimentUtil.getCpuTime();
 		ShapeletSize2RF a = new ShapeletSize2RF(train,trainClassIds,maxEventLabel,epsilon,numFeatures);
+		long after = ExperimentUtil.getCpuTime();
 		int numCorrect = 0;
 		System.out.println(testIndices);
 		for(int i=0;i<test.size();i++){
@@ -128,7 +146,31 @@ public class Main {
 		}
 		double accuracy = numCorrect / ((double) test.size());
 		System.out.println("accuracy: " + accuracy);
-		return accuracy;
+		return new ExperimentResult(0.0, accuracy, 0, after-before,after-before);
+	}
+	
+	private static ExperimentResult executeMultiClassExhaustiveFold(List<Sequence> database, List<List<Integer>> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
+		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
+		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
+		List<List<Integer>> trainClassIds = ExperimentUtil.getAll(classIds,trainIndices);
+		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
+		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
+		List<List<Integer>> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
+		long before = ExperimentUtil.getCpuTime();
+		ShapeletSize2RF a = new MultiClassShapeletSize2RF(train,trainClassIds,maxEventLabel,epsilon,numFeatures);
+		long after = ExperimentUtil.getCpuTime();
+		int numCorrect = 0;
+		System.out.println(testIndices);
+		for(int i=0;i<test.size();i++){
+			Integer result = a.classify(test.get(i));
+			List<Integer> actualClass = testClassIds.get(i);
+			if(actualClass.contains(result)){
+				numCorrect++;
+			}
+		}
+		double accuracy = numCorrect / ((double) test.size());
+		System.out.println("accuracy: " + accuracy);
+		return new ExperimentResult(0.0, accuracy, 0, after-before,after-before);
 	}
 
 	private static void appendToResultFile(String datasetName,double evolvedAccuracy,double exhaustiveAccuracy,double numSize2ShapeletsInEvolved, double avgEvolvedTime, double avgExhaustiveTime) throws IOException {
@@ -162,18 +204,20 @@ public class Main {
 		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
 		List<Integer> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
 		
-		
+		long before = ExperimentUtil.getCpuTime();
 		operators.add(new Pair<>(new SmartShapeletAppender(train,random, maxEventLabel,epsilon ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndEventMutator(random, maxEventLabel ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRelationshipMutator(random),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.25));
+		//operators.add(new Pair<>(new ShapeletResetter(random,maxEventLabel),  1.0));
 		
 		WeightedCompositeMutator mutator = new WeightedCompositeMutator(random, operators );
 		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(tournamentSize, p, random);
 		FitnessEvaluator<NShapelet> evaluator = new NShapeletFitnessEvaluator(train, trainClassIds, epsilon );
 		EvolutionEngine<NShapelet> engine = new EvolutionEngine<>(populationSize , numGenerations, mutator, selectionStrategy , evaluator , numFeatures,NShapelet.nShapeletComparator);
 		engine.runEvolution(getInitialGeneration(train));
-		AbstractRF a = new ShapeletRf(engine.getBestFeatures(),train,trainClassIds,epsilon);
+		AbstractRF a = new STIFE_NSHAPELET_RFSingleLabelClassifier(engine.getBestFeatures(),train,trainClassIds,maxEventLabel,sequenceDuration,epsilon);
+		long after = ExperimentUtil.getCpuTime();
 		int numCorrect = 0;
 		System.out.println(testIndices);
 		for(int i=0;i<test.size();i++){
@@ -187,7 +231,48 @@ public class Main {
 		System.out.println("accuracy: " + accuracy);
 		int num2Shapelets = (int) engine.getBestFeatures().stream().filter(sh -> sh.numTwoShapelets()==1).count();
 		double exhaustiveAccuracy = 0.0; //TODO: change next!
-		return new ExperimentResult(accuracy, exhaustiveAccuracy, num2Shapelets);
+		return new ExperimentResult(accuracy, exhaustiveAccuracy, num2Shapelets, after-before,after-before);
+	}
+	
+	private static ExperimentResult executeMultiClassFold(List<Sequence> database, List<List<Integer>> classIds,
+			List<Pair<MutationStrategy<NShapelet>, Double>> operators, int maxEventLabel, List<Integer> allIndices,
+			int foldNum, int numFolds) throws Exception, TimeScaleException, InvalidEventTableDimensionException,
+			ClassificationException, IOException {
+		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
+		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
+		List<List<Integer>> trainClassIds = ExperimentUtil.getAll(classIds,trainIndices);
+		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
+		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
+		List<List<Integer>> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
+		
+		long before = ExperimentUtil.getCpuTime();
+		operators.add(new Pair<>(new SmartShapeletAppender(train,random, maxEventLabel,epsilon ),  0.25));
+		operators.add(new Pair<>(new ShapeletEndEventMutator(random, maxEventLabel ),  0.25));
+		operators.add(new Pair<>(new ShapeletEndRelationshipMutator(random),  0.25));
+		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.25));
+		operators.add(new Pair<>(new ShapeletResetter(random,maxEventLabel),  1.0));
+		
+		WeightedCompositeMutator mutator = new WeightedCompositeMutator(random, operators );
+		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(tournamentSize, p, random);
+		FitnessEvaluator<NShapelet> evaluator = NShapeletFitnessEvaluator.create(train, trainClassIds, epsilon );
+		EvolutionEngine<NShapelet> engine = new EvolutionEngine<>(populationSize , numGenerations, mutator, selectionStrategy , evaluator , numFeatures,NShapelet.nShapeletComparator);
+		engine.runEvolution(getInitialGeneration(train));
+		AbstractRF a = new STIFE_NSHAPELET_RFMultiLabelClassifier(engine.getBestFeatures(),train,trainClassIds,maxEventLabel,sequenceDuration,epsilon);
+		long after = ExperimentUtil.getCpuTime();
+		int numCorrect = 0;
+		System.out.println(testIndices);
+		for(int i=0;i<test.size();i++){
+			Integer result = a.classify(test.get(i));
+			List<Integer> actualClass = testClassIds.get(i);
+			if(actualClass.contains(result)){
+				numCorrect++;
+			}
+		}
+		double accuracy = numCorrect / ((double) test.size());
+		System.out.println("accuracy: " + accuracy);
+		int num2Shapelets = (int) engine.getBestFeatures().stream().filter(sh -> sh.numTwoShapelets()==1).count();
+		double exhaustiveAccuracy = 0.0; //TODO: change next!
+		return new ExperimentResult(accuracy, exhaustiveAccuracy, num2Shapelets, after-before,after-before);
 	}
 
 	private static List<NShapelet> getInitialGeneration(List<Sequence> database) {

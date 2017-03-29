@@ -4,24 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import data_structures.Sequence;
-import stife.shapelet_size2.FeatureSelection;
 
-public class NShapeletFitnessEvaluator implements FitnessEvaluator<NShapelet> {
+public class STIFE_NSHAPELET_RFMultiLabelClassifier extends STIFE_NSHAPELET_RFSingleLabelClassifier {
 
-	private List<Sequence> database;
-	private List<Integer> classIds;
-	private int epsilon;
-
-	public NShapeletFitnessEvaluator(List<Sequence> database,List<Integer> classIds,int epsilon) {
-		this.database = database;
-		this.classIds = classIds;
-		this.epsilon = epsilon;
+	public STIFE_NSHAPELET_RFMultiLabelClassifier(List<NShapelet> nShapelets, List<Sequence> train,
+			List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon) throws Exception {
+		super(nShapelets, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon);
+		// TODO Auto-generated constructor stub
 	}
 	
-	public static NShapeletFitnessEvaluator create(List<Sequence> train, List<List<Integer>> trainClassIds, int epsilon) {
-		return new NShapeletFitnessEvaluator(modifyTrainSet(train,trainClassIds),modifyClassIds(trainClassIds),epsilon);
-	}
-
 	public static List<Integer> modifyClassIds(List<List<Integer>> classIds) {
 		List<Integer> newClassIds = new ArrayList<>();
 		for(int i=0;i<classIds.size();i++){
@@ -49,14 +40,6 @@ public class NShapeletFitnessEvaluator implements FitnessEvaluator<NShapelet> {
 		}
 		return newTrain;
 	}
-	
-	@Override
-	public double getFitness(NShapelet t) {
-		int[] occurrenceFeature = new int[database.size()];
-		for(int i=0;i<database.size();i++){
-			occurrenceFeature[i] = database.get(i).getAllOccurrences(t, epsilon).size();
-		}
-		return FeatureSelection.calcInfoGain(occurrenceFeature, classIds);
-	}
 
+	
 }

@@ -4,22 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import data_structures.Sequence;
-import stife.shapelet_size2.FeatureSelection;
 
-public class NShapeletFitnessEvaluator implements FitnessEvaluator<NShapelet> {
+public class MultiClassShapeletRf extends ShapeletRf {
 
-	private List<Sequence> database;
-	private List<Integer> classIds;
-	private int epsilon;
-
-	public NShapeletFitnessEvaluator(List<Sequence> database,List<Integer> classIds,int epsilon) {
-		this.database = database;
-		this.classIds = classIds;
-		this.epsilon = epsilon;
-	}
 	
-	public static NShapeletFitnessEvaluator create(List<Sequence> train, List<List<Integer>> trainClassIds, int epsilon) {
-		return new NShapeletFitnessEvaluator(modifyTrainSet(train,trainClassIds),modifyClassIds(trainClassIds),epsilon);
+	public MultiClassShapeletRf(List<NShapelet> nShapelets, List<Sequence> train, List<List<Integer>> classIds, int epsilon)
+			throws Exception {
+		super(nShapelets, modifyTrainSet(train,classIds), modifyClassIds(classIds), epsilon);
+		// TODO Auto-generated constructor stub
 	}
 
 	public static List<Integer> modifyClassIds(List<List<Integer>> classIds) {
@@ -49,14 +41,4 @@ public class NShapeletFitnessEvaluator implements FitnessEvaluator<NShapelet> {
 		}
 		return newTrain;
 	}
-	
-	@Override
-	public double getFitness(NShapelet t) {
-		int[] occurrenceFeature = new int[database.size()];
-		for(int i=0;i<database.size();i++){
-			occurrenceFeature[i] = database.get(i).getAllOccurrences(t, epsilon).size();
-		}
-		return FeatureSelection.calcInfoGain(occurrenceFeature, classIds);
-	}
-
 }
