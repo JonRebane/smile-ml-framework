@@ -3,7 +3,7 @@
 import sys
 import matplotlib.pyplot as plt
 
-def extractSeq(ifile):
+def extractSeq(ifile, chosen_sequence):
     lines = []
     with open(ifile, "r") as f:
         lines = f.readlines()
@@ -13,6 +13,9 @@ def extractSeq(ifile):
         interval = "".join(l.split("\n")).split(" ")
 
         seqid = int(interval[0])
+        if chosen_sequence is not None and seqid != chosen_sequence:
+            continue
+
         if seqid not in sequences.keys():
             sequences[seqid] = {}
 
@@ -24,7 +27,7 @@ def extractSeq(ifile):
 
     return sequences
 
-def visualize(sequences, ofile):
+def visualize(sequences):
     for seqid, event in sorted(sequences.items()):
         toplot = ()
         for eventid, val in sorted(event.items()):
@@ -35,20 +38,23 @@ def visualize(sequences, ofile):
         plt.xlabel("Time")
         plt.ylabel("Event ID")
         plt.savefig("sequence%d.png" % seqid)
-        plt.show()
         plt.clf()
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
-        print("Need 1 argument:\n\t- input file\n")
+        print("Need at least 1 argument:\n\t- input file\n")
         exit(1)
+
+    chosen_sequence = None
+    if len(sys.argv) == 3:
+        chosen_sequence = int(sys.argv[2])
 
     ifile = sys.argv[1]
 
     print("This script need the matplotlib package")
 
-    sequences = extractSeq(ifile)
-    visualize(sequences, "")
+    sequences = extractSeq(ifile, chosen_sequence)
+    visualize(sequences)
 
     print("Done!")
 
