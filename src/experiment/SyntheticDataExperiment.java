@@ -59,7 +59,7 @@ public class SyntheticDataExperiment extends Experiment{
 			//classifier training:
 			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),ibsmResult);
 			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelCompressedIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),compressedIBSMResult);
-			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelSTIFERFClassifier(train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
+			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelSTIFERFClassifier(random, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
 			PrintWriter out = new PrintWriter(new FileWriter( new File(outPath ),true));
 			String resultString = sequenceDuration +" " + ibsmResult.meanClassificationTimeMS() + " " + compressedIBSMResult.meanClassificationTimeMS() + " " + stifeResult.meanClassificationTimeMS();
 			out.println(resultString);

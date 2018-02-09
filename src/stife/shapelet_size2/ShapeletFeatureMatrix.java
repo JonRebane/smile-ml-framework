@@ -24,13 +24,14 @@ import java.util.concurrent.Future;
  */
 public class ShapeletFeatureMatrix {
 
-	private short[][] shapeletFeatureMatrix;
+	// TODO: migrate to float
+	private double[][] shapeletFeatureMatrix;
 	private int numDistinctEvents;
 	private List<Integer> classIds;
 	private Shapelet_Size2[] shapeletsOfColumns = null;
 	
 	/***
-	 * Initializes a shapelet feature matrix fitting to the parameters, classIds is required to be able to do feature selection
+	 * Initializes eventId1 shapelet feature matrix fitting to the parameters, classIds is required to be able to do feature selection
 	 * @param numSequences
 	 * @param numDistinctEvents
 	 * @param numRelationships
@@ -40,7 +41,7 @@ public class ShapeletFeatureMatrix {
 		assert(numSequences==classIds.size());
 		this.classIds = classIds;
 		this.numDistinctEvents = numDistinctEvents;
-		shapeletFeatureMatrix = new short[numSequences][numDistinctEvents*numDistinctEvents*numRelationships];
+		shapeletFeatureMatrix = new double[numSequences][numDistinctEvents*numDistinctEvents*numRelationships];
 	}
 	
 	/***
@@ -53,6 +54,11 @@ public class ShapeletFeatureMatrix {
 	public void incAt(int seqId,int dimensionA,int dimensionB,int relationshipId){
 		int col = calcColumnIndex(dimensionA,dimensionB,relationshipId);
 		shapeletFeatureMatrix[seqId][col]++;
+	}
+
+	public void incAt(int seqId,int dimensionA,int dimensionB,int relationshipId, double value){
+		int col = calcColumnIndex(dimensionA,dimensionB,relationshipId);
+		shapeletFeatureMatrix[seqId][col] += value;
 	}
 
 	/***
@@ -119,7 +125,7 @@ public class ShapeletFeatureMatrix {
 			set.add(new IndexGainPair(i,gain));
 		}
 		int count = 0;
-		short[][] newResultMatrix = new short[shapeletFeatureMatrix.length][n];
+		double[][] newResultMatrix = new double[shapeletFeatureMatrix.length][n];
 		Iterator<IndexGainPair> orderedIterator = set.descendingIterator();
 		//prev is just used for some assertions that sorting worked
 		IndexGainPair prev = null;
@@ -160,7 +166,7 @@ public class ShapeletFeatureMatrix {
 
 	private void reduceColumns(List<Integer> usefulColumns, ExecutorService pool) throws InterruptedException, ExecutionException {
 		Shapelet_Size2[] newShapeletsOfColumns = new Shapelet_Size2[usefulColumns.size()];
-		short[][] newResMatrix = new short[shapeletFeatureMatrix.length][usefulColumns.size()];
+		double[][] newResMatrix = new double[shapeletFeatureMatrix.length][usefulColumns.size()];
 		int incCount = 1000;
 		List<Future<?>> futures = new ArrayList<>();
 		for(int i=0;i<usefulColumns.size();i+=incCount){
@@ -187,8 +193,8 @@ public class ShapeletFeatureMatrix {
 		return usefullColumns;
 	}
 
-	private short[] getColumn(int colIndex, Collection<Integer> indices) {
-		short[] column = new short[indices.size()];
+	private double[] getColumn(int colIndex, Collection<Integer> indices) {
+		double[] column = new double[indices.size()];
 		int index = 0;
 		for(int i=0;i<shapeletFeatureMatrix.length;i++){
 			if(indices.contains(i)){
@@ -199,7 +205,7 @@ public class ShapeletFeatureMatrix {
 		return column;
 	}
 
-	private void copyColumn(short[][] targetMatrix, int targetColumn, short[][] sourceMatrix, int sourceColumn) {
+	private void copyColumn(double[][] targetMatrix, int targetColumn, double[][] sourceMatrix, int sourceColumn) {
 		for(int i = 0; i< targetMatrix.length;i++){
 			targetMatrix[i][targetColumn] = sourceMatrix[i][sourceColumn];
 		}
@@ -231,7 +237,7 @@ public class ShapeletFeatureMatrix {
 		return sum;
 	}
 
-	public short getAt(int row, int col) {
+	public double getAt(int row, int col) {
 		return shapeletFeatureMatrix[row][col];
 	}
 
@@ -239,7 +245,7 @@ public class ShapeletFeatureMatrix {
 		return shapeletFeatureMatrix[0].length;
 	}
 
-	public short[][] getMatrix() {
+	public double[][] getMatrix() {
 		return shapeletFeatureMatrix;
 	}	
 }

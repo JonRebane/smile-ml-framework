@@ -51,7 +51,7 @@ public class SequenceGenerator {
 	}
 
 	/***
-	 * Creates a new random int in range [lower,upper] (upper is inclusive)
+	 * Creates eventId1 new random int in range [lower,upper] (upper is inclusive)
 	 * @param lower
 	 * @param upper
 	 * @return

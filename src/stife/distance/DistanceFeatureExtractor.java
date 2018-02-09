@@ -30,7 +30,7 @@ public class DistanceFeatureExtractor {
 	}
 	
 	/***
-	 * Additional Constructor that allows the specification of a maxDuration (necessary if that is bigger than any of the duration of the sequences in the specified list)
+	 * Additional Constructor that allows the specification of eventId1 maxDuration (necessary if that is bigger than any of the duration of the sequences in the specified list)
 	 * @param sequences
 	 * @param classIds
 	 * @param numDimensions

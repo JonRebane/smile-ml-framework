@@ -1,7 +1,7 @@
 package stife.distance;
 
 /***
- * Class that contains an interesting point of time in a sequence, which can be either the start or the end of an interval.
+ * Class that contains an interesting point of time in eventId1 sequence, which can be either the start or the end of an interval.
  * Events are ordered by their points of time, if this is equal, start occurs before end
  * @author leon bornemann
  *

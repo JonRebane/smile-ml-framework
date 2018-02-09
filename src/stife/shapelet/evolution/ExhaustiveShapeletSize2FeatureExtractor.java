@@ -27,7 +27,7 @@ public class ExhaustiveShapeletSize2FeatureExtractor {
 		int prev = 0;
 		List<ShapeletExtractor> jobs = new LinkedList<>();
 		for(int i=0;i<train.size();i+=numSequencesPerJob){
-			jobs.add(new ShapeletExtractor(train, prev, Math.min(i+numSequencesPerJob, train.size()), shapeletFeatureMatrix, epsilon));
+			jobs.add(new ShapeletExtractor(null, train, prev, Math.min(i+numSequencesPerJob, train.size()), shapeletFeatureMatrix, epsilon));
 			prev = i+numSequencesPerJob;
 		}
 		//submit all jobs

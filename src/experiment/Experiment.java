@@ -1,16 +1,16 @@
 package experiment;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import data_structures.Sequence;
 import experiment.classifier.ClassificationException;
 import experiment.classifier.MultiLabelSTIFERFClassifier;
 import experiment.classifier.STIClassifier;
 import stife.distance.exceptions.InvalidEventTableDimensionException;
 import stife.distance.exceptions.TimeScaleException;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public abstract class Experiment {
 

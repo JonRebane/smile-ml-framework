@@ -20,7 +20,7 @@ import java.util.TreeSet;
 import data_structures.Sequence;
 
 /***
- * Class that bundles all the IO-Stuff that needs to be done, that does not fit anywhere else (does not have a class to which the IO-operation belongs)
+ * Class that bundles all the IO-Stuff that needs to be done, that does not fit anywhere else (does not have eventId1 class to which the IO-operation belongs)
  * @author Leon Bornemann
  *
  */

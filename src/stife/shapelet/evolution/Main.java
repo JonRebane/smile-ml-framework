@@ -41,7 +41,7 @@ public class Main {
 	public static void main(String[] args) throws Exception{
 		//TODO: use secure random!
 		List<File> allFiles = Arrays.stream(new File("data/singleLabelDatasets/").listFiles()).collect(Collectors.toList());
-		for(File file :allFiles){
+		for(File file :allFiles.stream().filter(f -> "BLOCKS".equals(f.getName())).collect(Collectors.toList())){
 //			if(!Arrays.asList("AUSLAN2","BLOCKS","CONTEXT").contains(file.getName())){
 				random = new Random(13);
 				System.out.println("starting " + file.getName());
@@ -124,7 +124,7 @@ public class Main {
 		appendToResultFile(datasetName,avgEvolvedAccuracy,avgExhaustiveAccuracy,avgNum2Shapelets,avgEvolvedTime,avgExhaustiveTime);
 	}
 
-	
+
 	private static ExperimentResult executeExhaustiveFold(List<Sequence> database, List<Integer> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
 		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
 		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
@@ -148,7 +148,7 @@ public class Main {
 		System.out.println("accuracy: " + accuracy);
 		return new ExperimentResult(0.0, accuracy, 0, after-before,after-before);
 	}
-	
+
 	private static ExperimentResult executeMultiClassExhaustiveFold(List<Sequence> database, List<List<Integer>> classIds, int maxEventLabel,List<Integer> allIndices, int foldNum, int numFolds) throws Exception {
 		List<Integer> trainIndices = ExperimentUtil.getTrainingIndices(allIndices, foldNum,numFolds);
 		List<Sequence> train = ExperimentUtil.getAll(database,trainIndices);
@@ -203,14 +203,14 @@ public class Main {
 		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
 		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
 		List<Integer> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
-		
+
 		long before = ExperimentUtil.getCpuTime();
 		operators.add(new Pair<>(new SmartShapeletAppender(train,random, maxEventLabel,epsilon ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndEventMutator(random, maxEventLabel ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRelationshipMutator(random),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.25));
 		//operators.add(new Pair<>(new ShapeletResetter(random,maxEventLabel),  1.0));
-		
+
 		WeightedCompositeMutator mutator = new WeightedCompositeMutator(random, operators );
 		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(tournamentSize, p, random);
 		FitnessEvaluator<NShapelet> evaluator = new NShapeletFitnessEvaluator(train, trainClassIds, epsilon );
@@ -233,7 +233,7 @@ public class Main {
 		double exhaustiveAccuracy = 0.0; //TODO: change next!
 		return new ExperimentResult(accuracy, exhaustiveAccuracy, num2Shapelets, after-before,after-before);
 	}
-	
+
 	private static ExperimentResult executeMultiClassFold(List<Sequence> database, List<List<Integer>> classIds,
 			List<Pair<MutationStrategy<NShapelet>, Double>> operators, int maxEventLabel, List<Integer> allIndices,
 			int foldNum, int numFolds) throws Exception, TimeScaleException, InvalidEventTableDimensionException,
@@ -244,14 +244,14 @@ public class Main {
 		List<Integer> testIndices = ExperimentUtil.getTestIndices(allIndices,trainIndices);
 		List<Sequence> test = ExperimentUtil.getAll(database,testIndices);
 		List<List<Integer>> testClassIds = ExperimentUtil.getAll(classIds,testIndices);
-		
+
 		long before = ExperimentUtil.getCpuTime();
 		operators.add(new Pair<>(new SmartShapeletAppender(train,random, maxEventLabel,epsilon ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndEventMutator(random, maxEventLabel ),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRelationshipMutator(random),  0.25));
 		operators.add(new Pair<>(new ShapeletEndRemover(random),  0.25));
 		operators.add(new Pair<>(new ShapeletResetter(random,maxEventLabel),  1.0));
-		
+
 		WeightedCompositeMutator mutator = new WeightedCompositeMutator(random, operators );
 		SelectionAlgorithm<NShapelet> selectionStrategy = new TournamentSelection(tournamentSize, p, random);
 		FitnessEvaluator<NShapelet> evaluator = NShapeletFitnessEvaluator.create(train, trainClassIds, epsilon );

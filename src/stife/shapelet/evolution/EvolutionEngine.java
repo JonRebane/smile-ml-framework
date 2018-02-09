@@ -53,14 +53,14 @@ public class EvolutionEngine<T> {
 		List<T> curGeneration = initial;
 		for(int gen = 0; gen<numGenerations;gen++){
 			//System.out.println("generation " + gen + " before mutation:  " +curGeneration);
-			for(int i=0;i<curGeneration.size();i++){
-				curGeneration.set(i, mutator.mutate(curGeneration.get(i)));
-			}
+			//for(int i=0;i<curGeneration.size();i++){
+		//		curGeneration.set(i, mutator.mutate(curGeneration.get(i)));
+	//		}
 			//System.out.println("generation " + gen + " after mutation:  " +curGeneration);
 			//curGeneration = curGeneration.stream().map(t -> mutator.mutate(t)).collect(Collectors.toList());
 			Map<T,Double> evaluatedPopulation = calculateFitnesses(curGeneration);
 			updateBest(evaluatedPopulation,gen);
-			//System.out.println("best of generation " + gen + ":  " +bestIndividuals);
+			//System.out.println("best of generation " + gen + ":  " +bestIndividuals.size());
 			curGeneration = new ArrayList<>(selectionStrategy.select(evaluatedPopulation));
 		}
 		System.out.println("finished Evolution");
@@ -75,10 +75,6 @@ public class EvolutionEngine<T> {
 		//prune best:
 		while(bestIndividuals.size()>numBest){
 			bestIndividuals.remove(bestIndividuals.first());
-//			if(a.numTwoShapelets()>1 && removed.getSecond()!= 0.0){
-//				System.out.println("found " +a+"with fiteness " +  removed.getSecond() );
-//			}
-			//System.out.println("removed " + removed.getFirst() + " with fitness " + removed.getSecond() + " from best");
 		}
 		allBest.put(gen,getBestFeatures());
 	}

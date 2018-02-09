@@ -37,7 +37,7 @@ public class ShapeletSize2RF extends AbstractRF implements STIClassifier<Integer
 	public ShapeletSize2RF(List<Sequence> train,List<Integer> classIds, int numDimensions,int epsilon,int numFeatures) throws Exception {
 		ExhaustiveShapeletSize2FeatureExtractor extractor = new ExhaustiveShapeletSize2FeatureExtractor();
 		matrix = extractor.extract(train,classIds,numDimensions,epsilon,numFeatures);
-		short[][] features = matrix.getMatrix();
+		double[][] features = matrix.getMatrix();
 		this.epsilon = epsilon;
 		rf = new RandomForest();
 		trainInstances = buildInstances(train, classIds, features, "testdata" + File.separator + "stifeTrainData.csv");
@@ -45,7 +45,7 @@ public class ShapeletSize2RF extends AbstractRF implements STIClassifier<Integer
 		classAttribute = trainInstances.classAttribute();
 	}
 	
-	private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, short[][] features, String tempFilePath) throws Exception {
+	private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, double[][] features, String tempFilePath) throws Exception {
 		PrintStream out = new PrintStream(new File(tempFilePath));
 		for(int col = 0;col<=features[0].length;col++){
 			out.print("Col_"+col);

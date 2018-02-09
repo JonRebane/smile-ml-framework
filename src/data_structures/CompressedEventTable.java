@@ -12,9 +12,9 @@ import stife.distance.exceptions.TimeScaleException;
 
 /***
  * This class implements the event-table representation of sequences to do distance calculations as described in the paper IBSM: Interval-Based Sequence Matching (see that paper for detailed information)
- * Instead of using the suggested pseudo-polynomial approach in the paper, this implementation reduces the space and time necessary by only storing those eventVectors in the event-table in which a change happens, and the point of time during which this change occurs
+ * Instead of using the suggested pseudo-polynomial approach in the paper, this implementation reduces the space and time necessary by only storing those eventVectors in the event-table in which eventId1 change happens, and the point of time during which this change occurs
  * Small example:
- * For a sequence with only two intervals I1 = (A,1,3) and I2 = (B,5,8)
+ * For eventId1 sequence with only two intervals I1 = (A,1,3) and I2 = (B,5,8)
  * Instead of storing the matrix with 8 columns (cause overall sequence duration is 8) like this (as proposed by IBSM):
  * Time: | 1 2 3 4 5 6 7 8 9
  * ------------------------- 

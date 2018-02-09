@@ -1,20 +1,20 @@
-package experiment.classifier;
+package stife.shapelet.evolution;
+
+import data_structures.Sequence;
+import stife.shapelet_size2.Shapelet_Size2;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
 
-import data_structures.Sequence;
+public class STIFE_2SHAPELET_RFMultiLabelClassifier extends STIFE_2SHAPELET_RFSingleLabelClassifier {
 
-public class MultiLabelSTIFERFClassifier extends AbstractSTIFERFClassifier {
-
-	public MultiLabelSTIFERFClassifier(Random random, List<Sequence> train, List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
-		super(random, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, pool);
+	public STIFE_2SHAPELET_RFMultiLabelClassifier(List<Shapelet_Size2> nShapelets, List<Sequence> train,
+												  List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon) throws Exception {
+		super(nShapelets, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon);
 		// TODO Auto-generated constructor stub
 	}
 
-	private static List<Integer> modifyClassIds(List<List<Integer>> classIds) {
+	public static List<Integer> modifyClassIds(List<List<Integer>> classIds) {
 		List<Integer> newClassIds = new ArrayList<>();
 		for(int i=0;i<classIds.size();i++){
 			List<Integer> curClassIds = classIds.get(i);
@@ -31,7 +31,7 @@ public class MultiLabelSTIFERFClassifier extends AbstractSTIFERFClassifier {
 	 * @param classIds
 	 * @return
 	 */
-	private static List<Sequence> modifyTrainSet(List<Sequence> train, List<List<Integer>> classIds) {
+	public static List<Sequence> modifyTrainSet(List<Sequence> train, List<List<Integer>> classIds) {
 		assert(train.size() == classIds.size());
 		List<Sequence> newTrain = new ArrayList<>();
 		for(int i=0;i<classIds.size();i++){
@@ -41,5 +41,6 @@ public class MultiLabelSTIFERFClassifier extends AbstractSTIFERFClassifier {
 		}
 		return newTrain;
 	}
+
 
 }

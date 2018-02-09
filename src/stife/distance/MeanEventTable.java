@@ -15,7 +15,7 @@ import stife.distance.exceptions.TimeScaleException;
 
 /***
  * This is some really nasty code-dublication, since this is basically the same class as EventTable, just that floats are used as the data basis.
- * Since however performance absolutely matters here since this is a DataMining application, we decided against using Generics, since they don't work with primitive types and auto-boxing is harmful to us
+ * Since however performance absolutely matters here since this is eventId1 DataMining application, we decided against using Generics, since they don't work with primitive types and auto-boxing is harmful to us
  * @author Leon Bornemann
  *
  */

@@ -4,15 +4,15 @@ import java.util.List;
 
 public class ColumnCopier implements Runnable {
 
-	private short[][] oldShapeletFeatureMatrix;
-	private short[][] newShapeletFeatureMatrix;
+	private double[][] oldShapeletFeatureMatrix;
+	private double[][] newShapeletFeatureMatrix;
 	private Shapelet_Size2[] newShapeletsOfColumns;
 	private int upper;
 	private int lower;
 	private List<Integer> usefulColumns;
 	private ShapeletFeatureMatrix matrixObject;
 
-	public ColumnCopier(ShapeletFeatureMatrix matrixObject, List<Integer> usefulColumns, short[][] oldShapeletFeatureMatrix, short[][] newShapeletFeatureMatrix, Shapelet_Size2[] newShapeletsOfColumns,int lower, int upper) {
+	public ColumnCopier(ShapeletFeatureMatrix matrixObject, List<Integer> usefulColumns, double[][] oldShapeletFeatureMatrix, double[][] newShapeletFeatureMatrix, Shapelet_Size2[] newShapeletsOfColumns,int lower, int upper) {
 		this.matrixObject = matrixObject;
 		this.usefulColumns = usefulColumns;
 		this.oldShapeletFeatureMatrix = oldShapeletFeatureMatrix;
@@ -30,7 +30,7 @@ public class ColumnCopier implements Runnable {
 		}
 	}
 	
-	private void copyColumn(short[][] targetMatrix, int targetColumn, short[][] sourceMatrix, int sourceColumn) {
+	private void copyColumn(double[][] targetMatrix, int targetColumn, double[][] sourceMatrix, int sourceColumn) {
 		for(int i = 0; i< targetMatrix.length;i++){
 			targetMatrix[i][targetColumn] = sourceMatrix[i][sourceColumn];
 		}

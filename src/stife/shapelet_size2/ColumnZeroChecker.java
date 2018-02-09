@@ -8,12 +8,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ColumnZeroChecker implements Callable<List<Integer>> {
 
-	private short[][] shapeletFeatureMatrix;
+	private double[][] shapeletFeatureMatrix;
 	private Collection<Integer> trainIndices;
 	private int upper;
 	private int lower;
 
-	public ColumnZeroChecker(Collection<Integer> trainIndices,short[][] shapeletFeatureMatrix, int lower, int upper) {
+	public ColumnZeroChecker(Collection<Integer> trainIndices,double[][] shapeletFeatureMatrix, int lower, int upper) {
 		this.trainIndices = trainIndices;
 		this.shapeletFeatureMatrix = shapeletFeatureMatrix;
 		this.lower = lower;

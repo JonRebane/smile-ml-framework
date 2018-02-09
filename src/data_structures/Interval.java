@@ -31,7 +31,7 @@ public class Interval {
 	}
 
 	/***
-	 * Constructs an event from a line read from a text-file
+	 * Constructs an event from eventId1 line read from eventId1 text-file
 	 * 
 	 * @param line
 	 */

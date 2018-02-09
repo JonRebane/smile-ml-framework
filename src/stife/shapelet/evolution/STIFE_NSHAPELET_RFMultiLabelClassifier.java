@@ -8,11 +8,11 @@ import data_structures.Sequence;
 public class STIFE_NSHAPELET_RFMultiLabelClassifier extends STIFE_NSHAPELET_RFSingleLabelClassifier {
 
 	public STIFE_NSHAPELET_RFMultiLabelClassifier(List<NShapelet> nShapelets, List<Sequence> train,
-			List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon) throws Exception {
+												  List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon) throws Exception {
 		super(nShapelets, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon);
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	public static List<Integer> modifyClassIds(List<List<Integer>> classIds) {
 		List<Integer> newClassIds = new ArrayList<>();
 		for(int i=0;i<classIds.size();i++){
@@ -41,5 +41,5 @@ public class STIFE_NSHAPELET_RFMultiLabelClassifier extends STIFE_NSHAPELET_RFSi
 		return newTrain;
 	}
 
-	
+
 }

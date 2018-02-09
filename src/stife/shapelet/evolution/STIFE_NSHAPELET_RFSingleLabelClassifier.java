@@ -22,7 +22,8 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class STIFE_NSHAPELET_RFSingleLabelClassifier extends AbstractRF implements STIClassifier<Integer> {
+public class
+STIFE_NSHAPELET_RFSingleLabelClassifier extends AbstractRF implements STIClassifier<Integer> {
 
 	private RandomForest rf;
 	private FastVector allAttributes;
@@ -33,7 +34,7 @@ public class STIFE_NSHAPELET_RFSingleLabelClassifier extends AbstractRF implemen
 	private DistanceFeatureMatrix distanceFeatureMatrix;
 	private int sequenceDuration;
 	private int numDimensions;
-	private StaticMetricExtractor staticMetricFeatureExtractor;	
+	private StaticMetricExtractor staticMetricFeatureExtractor;
 
 	public STIFE_NSHAPELET_RFSingleLabelClassifier(List<NShapelet> nShapelets,List<Sequence> train,List<Integer> classIds,int numDimensions, int sequenceDuration,int epsilon) throws Exception{
 		this.nShapelets = nShapelets;
@@ -50,7 +51,7 @@ public class STIFE_NSHAPELET_RFSingleLabelClassifier extends AbstractRF implemen
 		allAttributes = prepareRf(rf,trainInstances,allAttributes);
 		classAttribute = trainInstances.classAttribute();
 	}
-	
+
 	private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, List<NShapelet> nShapelets, StaticFeatureMatrix staticFeatureMatrix, double[][] distanceFeatureMatrix, String tempFilePath) throws Exception {
 		PrintStream out = new PrintStream(new File(tempFilePath));
 		int numFeatures = nShapelets.size() + staticFeatureMatrix.numCols() + distanceFeatureMatrix[0].length;
@@ -86,9 +87,9 @@ public class STIFE_NSHAPELET_RFSingleLabelClassifier extends AbstractRF implemen
 		}
 		out.close();
 		Instances instances = buildInstancesFromFile(classIds, tempFilePath);
-	    return instances;
+		return instances;
 	}
-	
+
 	@Override
 	public Integer classify(Sequence sequence) throws TimeScaleException, InvalidEventTableDimensionException,
 			ClassificationException, IOException, Exception {

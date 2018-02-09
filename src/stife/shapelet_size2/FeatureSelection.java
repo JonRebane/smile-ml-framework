@@ -33,7 +33,7 @@ public class FeatureSelection {
 	}
 
 	/***
-	 * Calculates the information gain for a numeric attribute, given it's classes
+	 * Calculates the information gain for eventId1 numeric attribute, given it's classes
 	 * @param numericAttribute
 	 * @param classIds
 	 * @return
@@ -56,9 +56,28 @@ public class FeatureSelection {
 		}
 		return bestGain;
 	}
+
+	public static double calcInfoGain(double[] numericAttribute,List<Integer> classIds) {
+		assert(numericAttribute.length == classIds.size());
+		Integer[] order = getColumnSortedIndices(numericAttribute);
+		//find the best splitting point
+		double bestGain = 0;
+		double entropy = calcEntropy(classIds);
+		for(int i=0;i<order.length-1;i++){
+			if(numericAttribute[order[i]] != numericAttribute[order[i+1]]){
+				double splitVal = (numericAttribute[order[i]] + numericAttribute[order[i+1]])/2.0;
+				boolean[] curSplit = columnSmallerOrEqualThan(numericAttribute,splitVal);
+				double curGain = entropy - infoAfterSplit(curSplit,classIds);
+				if(curGain>bestGain){
+					bestGain = curGain;
+				}
+			}
+		}
+		return bestGain;
+	}
 	
 	/***
-	 * Calculates the information gain for a numeric attribute, given it's classes
+	 * Calculates the information gain for eventId1 numeric attribute, given it's classes
 	 * @param numericAttribute
 	 * @param classIds
 	 * @return
@@ -96,6 +115,13 @@ public class FeatureSelection {
 		return calcEntropy(classOfFalse)*classOfFalse.size()/booleanAttribute.length + calcEntropy(classOfTrue)*classOfTrue.size()/booleanAttribute.length;
 	}
 
+	private static boolean[] columnSmallerOrEqualThan(double[] numericAttribute, double splitVal) {
+		boolean[] out = new boolean[numericAttribute.length];
+		for(int i=0;i<numericAttribute.length;i++){
+			out[i] = numericAttribute[i] <= splitVal;
+		}
+		return out;
+	}
 
 	private static boolean[] columnSmallerOrEqualThan(short[] numericAttribute, double splitVal) {
 		boolean[] out = new boolean[numericAttribute.length];
@@ -144,9 +170,22 @@ public class FeatureSelection {
 			indices[i] = i;
 		}
 		Arrays.sort(indices, new Comparator<Integer>() {
-		    @Override public int compare(final Integer o1, final Integer o2) {
-		        return Integer.compare(column[o1], column[o2]);
-		    }
+			@Override public int compare(final Integer o1, final Integer o2) {
+				return Integer.compare(column[o1], column[o2]);
+			}
+		});
+		return indices;
+	}
+
+	public static Integer[] getColumnSortedIndices(double[] column) {
+		Integer[] indices = new Integer[column.length];
+		for(int i=0;i<indices.length;i++){
+			indices[i] = i;
+		}
+		Arrays.sort(indices, new Comparator<Integer>() {
+			@Override public int compare(final Integer o1, final Integer o2) {
+				return Double.compare(column[o1], column[o2]);
+			}
 		});
 		return indices;
 	}
