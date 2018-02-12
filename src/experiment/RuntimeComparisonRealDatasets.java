@@ -3,8 +3,11 @@ package experiment;
 import data_structures.Interval;
 import data_structures.Sequence;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.lang.Double.max;
 import static java.lang.Math.abs;
@@ -18,19 +21,14 @@ public class RuntimeComparisonRealDatasets {
 
 
         Random r = new Random(1);
-        int max = 10;
-        for (int i = 0; i < 10; i++) {
+        int max = 30;
+        for (int i = 0; i < 0; i++) {
             int ae = r.nextInt(max) + 1;
             int as = r.nextInt(ae) + 1;
 
             int be = r.nextInt(max) + 1;
             int bs = r.nextInt(be) + 1;
-            System.out.print("Relation: ");
-            int rel = getRelationship(as, ae, bs, be);
-            System.out.println();
-            printSeq(as, ae, bs, be, max);
-            System.out.println("Cost: " + computeModelCost(rel, as, ae, bs, be));
-            System.out.println();
+            testSeq(sequence, max, as, ae, bs, be);
         }
 
 
@@ -38,15 +36,38 @@ public class RuntimeComparisonRealDatasets {
 //		double ae = 14.5;
 //		double bs = 1;
 //		double be = 10;
-        double bs = 15;
-        double be = 15;
-        double as = 1;
-        double ae = 15;
-        int rel = getRelationship(as, ae, bs, be);
-        System.out.println();
-        printSeq(as, ae, bs, be, 30);
-        System.out.println(computeModelCost(rel, as, ae, bs, be));
+        double as = 2;
+        double ae = 10;
+        double bs = 4;
+        double be = 8;
+        //testSeq(sequence, 15, as, ae, bs, be);
 
+        bs = 2;
+        be = 10;
+        as = 4;
+        ae = 8;
+       // testSeq(sequence, 15, as, ae, bs, be);
+
+        testSeq(sequence, 30, 2, 24, 1, 18);
+        testSeq(sequence, 30, 1, 18, 2, 24);
+        testSeq(sequence, 30, 6, 27, 1, 5);
+        testSeq(sequence, 30, 1, 5, 6, 27);
+        testSeq(sequence, 30, 5, 27, 1, 5);
+        testSeq(sequence, 30, 1, 5, 5, 27);
+        /*
+        a:(6,27) b:(1, 5)contains but shuld be followed by
+        :(2,24) b:(1, 18)contains but shuld be overlap
+a:(2,24) b:(1, 18)contains but shuld be overlap
+a:(2,24) b:(1, 16)contains but shuld be overlap
+a:(2,24) b:(1, 16)contains but shuld be overlap
+a:(2,24) b:(1, 14)contains but shuld be overlap
+a:(2,24) b:(1, 14)contains but shuld be overlap
+a:(2,24) b:(1, 12)contains but shuld be overlap
+a:(2,24) b:(1, 12)contains but shuld be overlap
+a:(2,24) b:(1, 12)contains but shuld be overlap
+a:(2,24) b:(1, 10)contains but shuld be overlap
+
+         */
 
 //		System.out.print("Relation: ");
 //		getRelationship(1,53,26,76);
@@ -55,15 +76,29 @@ public class RuntimeComparisonRealDatasets {
 //		System.out.println(sequence.computeCost(Sequence.OVERLAP, null, 1, 53, 26, 76));
 //		System.exit(0);
 //
-//		ExecutorService pool = Executors.newCachedThreadPool();
-//		int epsilon = 5;
-//		int shapeletFeatureCount = 75;
-//		File singleLabelDatasetPath = new File("data/singleLabelDatasets");
-//		File multiLabelDatasetPath = new File("data/multiLabelDatasets");
-//		 seed: 13
-//		RealDataExperiment experiment = new RealDataExperiment(pool,epsilon,shapeletFeatureCount,singleLabelDatasetPath,multiLabelDatasetPath,new Random(13),10);
-//		experiment.runExperiment();
-//		pool.shutdown();
+      //  System.exit(0);
+
+        Sequence.METHOD = 4;
+        ExecutorService pool = Executors.newCachedThreadPool();
+        int epsilon = 5;
+        int shapeletFeatureCount = 75;
+        File singleLabelDatasetPath = new File("data/singleLabelDatasets");
+        File multiLabelDatasetPath = new File("data/multiLabelDatasets");
+        // seed: 13
+        RealDataExperiment experiment = new RealDataExperiment(pool, epsilon, shapeletFeatureCount, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
+        experiment.runExperiment();
+        pool.shutdown();
+    }
+
+    private static void testSeq(Sequence sequence, int max, double as, double ae, double bs, double be) {
+        int relA = getRelationship(as, ae, bs, be);
+        int relB = sequence.getRelationship(as, ae, bs, be, 0);
+        System.out.print("new relation: '" + Sequence.printRel(relA));
+        System.out.print("' old relation: '" + Sequence.printRel(relB));
+        System.out.println("'");
+        printSeq(as, ae, bs, be, max);
+        System.out.println("Cost: " + computeModelCost(relA, as, ae, bs, be));
+        System.out.println();
     }
 
     public static double computeModelCost(int relationshipId, double as, double ae, double bs, double be) {
@@ -73,11 +108,7 @@ public class RuntimeComparisonRealDatasets {
             case Sequence.OVERLAP:
                 return overlapCost(as, ae, bs, be);
             case Sequence.CONTAINS:
-//      case Sequence.LEFT_CONTAINS:
-//      case Sequence.RIGHT_CONTAINS:
                 return computeContainsCost(as, ae, bs, be);
-            //	break;
-            //return containsCost(shapelet, aLen, bLen);
             case Sequence.LEFT_CONTAINS:
                 return computeLeftContainCost(as, ae, bs, be);
             case Sequence.RIGHT_CONTAINS:
@@ -85,7 +116,7 @@ public class RuntimeComparisonRealDatasets {
             case Sequence.MEET:
             case Sequence.MATCH:
             case Sequence.FOLLOWED_BY:
-                return Math.min(abs(ae - as) / abs(be - bs), abs(be - bs) / abs(ae - as));
+                return Math.min(length(as, ae) / length(bs, be), length(bs, be) / length(as, ae));
             default:
                 throw new RuntimeException("illegal relation");
                 //return defaultCost(shapelet, aLen, bLen);
@@ -94,7 +125,7 @@ public class RuntimeComparisonRealDatasets {
     }
 
     private static double computeRightContainsCost(double as, double ae, double bs, double be) {
-        if (bs > as) {
+        if (as > bs) {
             double ts = as;
             double te = ae;
             as = bs;
@@ -102,13 +133,13 @@ public class RuntimeComparisonRealDatasets {
             bs = ts;
             be = te;
         }
-        double numerator = abs(be - (ae + as) / 2) + abs(be - ae);
-        double denominator = (be - bs) / 2;
+        double numerator = abs(bs - (ae + as) / 2);
+        double denominator = length(as, ae) / 2;
         return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
     }
 
     private static double computeLeftContainCost(double as, double ae, double bs, double be) {
-        if (be < ae) {
+        if (ae < be) {
             double ts = as;
             double te = ae;
             as = bs;
@@ -117,13 +148,13 @@ public class RuntimeComparisonRealDatasets {
             be = te;
         }
 
-        double numerator = abs(bs - (ae + as) / 2) + abs(bs - as);
-        double denominator = length(bs, be) / 2;
+        double numerator = abs(be - (ae + as) / 2);
+        double denominator = length(as, ae) / 2;
         return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
     }
 
-    private static double length(double bs, double be) {
-        return max(1, be - bs);
+    private static double length(double s, double e) {
+        return max(1, e - s);
     }
 
     private static double computeContainsCost(double as, double ae, double bs, double be) {
@@ -138,7 +169,7 @@ public class RuntimeComparisonRealDatasets {
 
         double delta = 0.25;
         double numerator = abs(bs - delta * (ae - as) - as) + abs(be - ae + delta * (ae - as));
-        double denominator = 2 * delta * length(ae, as);
+        double denominator = 2 * delta * length(as, ae);
         return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
     }
 
@@ -162,34 +193,25 @@ public class RuntimeComparisonRealDatasets {
             // left contain
             // match
             if (ae == be) {
-                System.out.print("match");
                 return Sequence.MATCH;
             } else {
-                System.out.print("left contains");
                 return Sequence.LEFT_CONTAINS;
             }
         } else if (ae == be) {
             // right contains
-            System.out.print("right contains");
             return Sequence.RIGHT_CONTAINS;
         } else {
             if (ae == bs || be == as) {
-                System.out.print("meet");
                 return Sequence.MEET;
             } else if (as > bs && ae < be) {
-                System.out.print("b contains a");
                 return Sequence.CONTAINS;
             } else if (bs > as && be < ae) {
-                System.out.println("a contains b");
                 return Sequence.CONTAINS;
             } else if (ae - bs < 0) {
-                System.out.print("b follows a");
                 return Sequence.FOLLOWED_BY;
             } else if (be - as < 0) {
-                System.out.println("a follows b");
                 return Sequence.FOLLOWED_BY;
             } else {
-                System.out.print("overlap");
                 return Sequence.OVERLAP;
             }
 

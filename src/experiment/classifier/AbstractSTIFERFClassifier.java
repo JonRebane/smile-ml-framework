@@ -66,16 +66,17 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         //shapelets:
         shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS, classIds);
 
-        Map<ShapeletKey, List<Shapelet_Size2>> shapelets = new HashMap<>();
-        for (Sequence sequence : train) {
-            Map<ShapeletKey, List<Shapelet_Size2>> sequenceShapelets = sequence.getAllShapeletWithKeys(epsilon);
-            for (Map.Entry<ShapeletKey, List<Shapelet_Size2>> kv : sequenceShapelets.entrySet()) {
-                List<Shapelet_Size2> all = shapelets.computeIfAbsent(kv.getKey(), l -> new ArrayList<>());
-                all.addAll(kv.getValue());
-            }
-        }
-        Shapelet_Size2FitnessEvaluator fitnessEvaluator = new Shapelet_Size2FitnessEvaluator(train, classIds, epsilon);
-        this.database = createShapeletDatabase(fitnessEvaluator, shapelets);
+//        Map<ShapeletKey, List<Shapelet_Size2>> shapelets = new HashMap<>();
+//        for (Sequence sequence : train) {
+//            Map<ShapeletKey, List<Shapelet_Size2>> sequenceShapelets = sequence.getAllShapeletWithKeys(epsilon);
+//            for (Map.Entry<ShapeletKey, List<Shapelet_Size2>> kv : sequenceShapelets.entrySet()) {
+//                List<Shapelet_Size2> all = shapelets.computeIfAbsent(kv.getKey(), l -> new ArrayList<>());
+//                all.addAll(kv.getValue());
+//            }
+//        }
+//        Shapelet_Size2FitnessEvaluator fitnessEvaluator = new Shapelet_Size2FitnessEvaluator(train, classIds, epsilon);
+//        this.database = createShapeletDatabase(fitnessEvaluator, shapelets);
+        this.database = null;
 
         //create all the jobs:
         int numSequencesPerJob = 10;
@@ -98,7 +99,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), "testdata" + File.separator + "stifeTrainData.csv");
         rf = new RandomForest();
         Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
-        rf.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString()});
+        rf.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
         rf.buildClassifier(trainInstances);
         allAttributes = new FastVector();
         for (int col = 0; col < trainInstances.numAttributes(); col++) {
@@ -254,7 +255,10 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         double[] shapeletFeatures = new double[shapeletFeatureMatrix.numCols()];
         for (int i = 0; i < shapeletFeatureMatrix.numCols(); i++) {
             ShapeletKey key = new ShapeletKey(shapeletFeatureMatrix.getShapeletOfColumn(i));
-            Shapelet_Size2 curShapelet = this.database.get(key);
+            Shapelet_Size2 curShapelet = shapeletFeatureMatrix.getShapeletOfColumn(i);
+            if (this.database != null) {
+                curShapelet = this.database.get(key);
+            }
             shapeletFeatures[i] = sequence.computeShapeletSimilarity(curShapelet, epsilon);
         }
         return shapeletFeatures;

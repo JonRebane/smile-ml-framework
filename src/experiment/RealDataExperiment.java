@@ -44,7 +44,7 @@ public class RealDataExperiment extends Experiment{
 
 	public void runExperiment() throws Exception {
 		Map<String,List<ClassifierResult>> results = new LinkedHashMap<>();
-		boolean runSingle = false;
+		boolean runSingle = true;
 		boolean runMultiple = true;
 		if (runSingle) {
 			for(File dir : singleLabelDataSetPath.listFiles()){
@@ -95,8 +95,8 @@ public class RealDataExperiment extends Experiment{
 			HashSet<Integer> trainWithoutTest = new HashSet<>(testIndices);
 			trainWithoutTest.removeAll(trainIndices);
 			assert(trainWithoutTest.size()==testIndices.size());
-			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),ibsmResult);
-			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelCompressedIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),compressedIBSMResult);
+			//measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),ibsmResult);
+			//measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelCompressedIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),compressedIBSMResult);
 			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelSTIFERFClassifier(random, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
 		}
 		//save results:

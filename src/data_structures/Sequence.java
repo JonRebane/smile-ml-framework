@@ -35,6 +35,12 @@ public class Sequence {
     public static final int RIGHT_CONTAINS = 6;
     public static final int FOLLOWED_BY = 7;
 
+    // 1: plain old stife
+    // 2: span
+    // 3: distance
+    // 4: span and distance
+    public static int METHOD = 1;
+
     public static int getMaxDuration(List<Sequence> database) {
         int maxDuration = -1;
         for (Sequence seq : database) {
@@ -170,9 +176,8 @@ public class Sequence {
                 int bStart = intervals.get(j).getStart();
                 int bEnd = intervals.get(j).getEnd();
                 int relationshipId = getRelationship(aStart, aEnd, bStart, bEnd, epsilon);
-
-                Shapelet_Size2 shapelet = database.get(new ShapeletKey(relationshipId, aId, bId));
-                double cost = computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                //Shapelet_Size2 shapelet = database.get(new ShapeletKey(relationshipId, aId, bId));
+                double cost = computeModelCost(relationshipId, aStart, aEnd, bStart, bEnd);
                 shapeletFeatureMatrix.incAt(seqId, aId, bId, relationshipId, cost);
             }
             //some events that start at the same time as A may be before A in the order, we need to consider those as well:
@@ -184,8 +189,7 @@ public class Sequence {
                     break;
                 } else {
                     int relationshipId = getRelationship(aStart, aEnd, bStart, bEnd, epsilon);
-                    Shapelet_Size2 shapelet = database.get(new ShapeletKey(relationshipId, aId, bId));
-                    double cost = computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                    double cost = computeModelCost(relationshipId, aStart, aEnd, bStart, bEnd);//computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
                     shapeletFeatureMatrix.incAt(seqId, aId, bId, relationshipId, cost);
                     //shapeletFeatureMatrix.incAt(seqId, aId, bId, relationshipId);
                 }
@@ -257,6 +261,154 @@ public class Sequence {
         return shapelets;
     }
 
+    private static int getRelationshipCorrect(double as, double ae, double bs, double be) {
+        if (as == bs) {
+            // left contain
+            // match
+            if (ae == be) {
+                return Sequence.MATCH;
+            } else {
+                return Sequence.LEFT_CONTAINS;
+            }
+        } else if (ae == be) {
+            // right contains
+            return Sequence.RIGHT_CONTAINS;
+        } else {
+            // meet
+            // follows
+            // contains
+            // overlap
+            if (ae == bs || be == as) {
+                return Sequence.MEET;
+            } else if (as > bs && ae < be) {
+                return Sequence.CONTAINS;
+            } else if (bs > as && be < ae) {
+                return Sequence.CONTAINS;
+            } else if (ae - bs < 0) {
+                return Sequence.FOLLOWED_BY;
+            } else if (be - as < 0) {
+                return Sequence.FOLLOWED_BY;
+            } else {
+                return Sequence.OVERLAP;
+            }
+        }
+
+    }
+
+    public static double computeModelCost(int relationshipId, double as, double ae, double bs, double be) {
+        double span = 1;
+        switch (METHOD) {
+            case 1: // good'ol stife
+                return 1;
+            case 2: // stife with max span
+                return (length(as, ae) + length(bs, be)) / 2;//Math.min(as, bs) + max(ae, be);
+            case 4: // stife with max span + distance
+                span = (length(as, ae) + length(bs, be)) / 2;
+            case 3: // stife with only distance
+                switch (relationshipId) {
+                    case Sequence.OVERLAP:
+                        return overlapCost(as, ae, bs, be) * span;
+                    case Sequence.CONTAINS:
+                        return computeContainsCost(as, ae, bs, be) * span;
+                    case Sequence.LEFT_CONTAINS:
+                        return computeLeftContainCost(as, ae, bs, be) * span;
+                    case Sequence.RIGHT_CONTAINS:
+                        return computeRightContainsCost(as, ae, bs, be) * span;
+                    case Sequence.MEET:
+                    case Sequence.MATCH:
+                    case Sequence.FOLLOWED_BY:
+                        return Math.min(length(as, ae) / length(bs, be), length(bs, be) / length(as, ae)) * span;
+                    default:
+                        throw new RuntimeException("illegal relation id=" + relationshipId);
+                }
+            default:
+                throw new RuntimeException("illegal mode");
+        }
+    }
+
+    private static double computeRightContainsCost(double as, double ae, double bs, double be) {
+        if (as > bs) {
+            double ts = as;
+            double te = ae;
+            as = bs;
+            ae = be;
+            bs = ts;
+            be = te;
+        }
+        double numerator = abs(bs - (ae + as) / 2);
+        double denominator = length(as, ae) / 2;
+        return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
+    }
+
+    private static double computeLeftContainCost(double as, double ae, double bs, double be) {
+        if (ae < be) {
+            double ts = as;
+            double te = ae;
+            as = bs;
+            ae = be;
+            bs = ts;
+            be = te;
+        }
+
+        double numerator = abs(be - (ae + as) / 2);
+        double denominator = length(as, ae) / 2;
+        return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
+    }
+
+    private static double length(double s, double e) {
+        return max(1, e - s);
+    }
+
+    private static double computeContainsCost(double as, double ae, double bs, double be) {
+        if (bs < as) {
+            double ts = as;
+            double te = ae;
+            as = bs;
+            ae = be;
+            bs = ts;
+            be = te;
+        }
+
+        double delta = 0.25;
+        double numerator = abs(bs - delta * (ae - as) - as) + abs(be - ae + delta * (ae - as));
+        double denominator = 2 * delta * length(as, ae);
+        return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
+    }
+
+    private static double overlapCost(double as, double ae, double bs, double be) {
+        if (bs < as) {
+            double ts = as;
+            double te = ae;
+            as = bs;
+            ae = be;
+            bs = ts;
+            be = te;
+        }
+
+        double numerator = abs(bs - (ae + as) / 2) + abs(ae - (be + bs) / 2);
+        double denominator = be - bs + ae - as;
+        return (1.0 - (numerator == 0 ? numerator : numerator / denominator));
+    }
+
+    public static String printRel(int rel) {
+        switch (rel) {
+            case Sequence.OVERLAP:
+                return "overlap";
+            case Sequence.CONTAINS:
+                return "contains";
+            case Sequence.LEFT_CONTAINS:
+                return "left contains";
+            case Sequence.RIGHT_CONTAINS:
+                return "right_contains";
+            case Sequence.MEET:
+                return "meet";
+            case Sequence.MATCH:
+                return "match";
+            case Sequence.FOLLOWED_BY:
+                return "followed by";
+        }
+        return "?";
+    }
 
     /***
      * Method is only public, so unit-testing is possible
@@ -275,81 +427,42 @@ public class Sequence {
      * 7 - followedBy
      */
     //TODO
-    public int getRelationship(int as, int ae, int bs, int be, int e) {
-        if (as == bs) {
-            // left contain
-            // match
-            if (ae == be) {
-                //System.out.print("match");
-                return MATCH;
-            }else {
-//                System.out.print("left contains");
-                return LEFT_CONTAINS;
-            }
-        } else if (ae == be) {
-            // right contains
-            //System.out.print("right contains");
-            return RIGHT_CONTAINS;
-        } else {
-            if (ae == bs || be == as) {
-                //System.out.print("meet");
-                return MEET;
-            } else if (as > bs && ae < be) {
-                //System.out.print("b contains a");
-                return CONTAINS;
-            } else if(bs < as && be < ae) {
-                //System.out.println("a contains b");
-                return CONTAINS;
-            }else if (ae - bs < 0) {
-                //System.out.print("b follows a");
-                return FOLLOWED_BY;
-            } else if(be - as < 0){
-                //System.out.println("a follows b");
-                return FOLLOWED_BY;
-            }else {
-                //System.out.print("overlap");
-                return OVERLAP;
-            }
-
-            // meet
-            // follows
-            // contains
-            // overlap
-
-        }
-        /*assert (as - e <= bs);
-
-        //Aliases to make returns more readable:
-        //results = list(meet=1,match=2,overlap=3,leftContains=4,contains=5,rightContains=6,followedBy=7)
-        boolean startsMatch = bs >= as - e && bs <= as + e;
-        boolean endsMatch = be >= ae - e && be <= ae + e;
-        if (startsMatch) {
-            // can be either left-contain, match or overlap
-            if (endsMatch) {
-                return MATCH;
-            } else if (be < ae - e) {
-                return LEFT_CONTAINS;
-            } else {
-                assert (be > ae + e);
-                return OVERLAP;
-            }
-        } else {
-            // can be either right-contain, overlap,contain, meet or follow
-            boolean endMatchesStart = bs >= ae - e && bs <= ae + e;
-            if (endsMatch) {
-                return RIGHT_CONTAINS;
-            } else if (endMatchesStart) {
-                return MEET;
-            } else if (be < ae - e) {
-                return CONTAINS;
-            } else if (bs < ae - e) {
-                assert (be > ae + e);
-                return OVERLAP;
-            } else {
-                assert (bs > ae + e);
-                return FOLLOWED_BY;
-            }
-        }*/
+    public int getRelationship(double as, double ae, double bs, double be, int e) {
+        return getRelationshipCorrect(as, ae, bs, be);
+//        e = 0;
+//        assert (as - e <= bs);
+//
+//        //Aliases to make returns more readable:
+//        //results = list(meet=1,match=2,overlap=3,leftContains=4,contains=5,rightContains=6,followedBy=7)
+//        boolean startsMatch = bs >= as - e && bs <= as + e;
+//        boolean endsMatch = be >= ae - e && be <= ae + e;
+//        if (startsMatch) {
+//            // can be either left-contain, match or overlap
+//            if (endsMatch) {
+//                return MATCH;
+//            } else if (be < ae - e) {
+//                return LEFT_CONTAINS;
+//            } else {
+//                assert (be > ae + e);
+//                return OVERLAP;
+//            }
+//        } else {
+//            // can be either right-contain, overlap,contain, meet or follow
+//            boolean endMatchesStart = bs >= ae - e && bs <= ae + e;
+//            if (endsMatch) {
+//                return RIGHT_CONTAINS;
+//            } else if (endMatchesStart) {
+//                return MEET;
+//            } else if (be < ae - e) {
+//                return CONTAINS;
+//            } else if (bs < ae - e) {
+//                assert (be > ae + e);
+//                return OVERLAP;
+//            } else {
+//                assert (bs > ae + e);
+//                return FOLLOWED_BY;
+//            }
+//        }
     }
 
     public int intervalCount() {
@@ -441,6 +554,7 @@ public class Sequence {
         //TODO: Test this oh man oh man :D
         int e = epsilon;
         double count = 0;
+        double matches = 0;
         List<Interval> relevantIntervals = new ArrayList<>();
         for (int i = 0; i < intervals.size(); i++) {
             int eventId = intervals.get(i).getDimension();
@@ -467,9 +581,12 @@ public class Sequence {
                 int relationshipId = getRelationship(aStart, aEnd, bStart, bEnd, e);
                 if (relationshipId == shapelet.getRelationshipId()) {
                     // do distance here
-                    double cost = computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                    double cost = computeModelCost(relationshipId, aStart, aEnd, bStart, bEnd);//computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                    /*if (cost > count) {
+                        count = cost;
+                    }*/
                     count += cost;
-                    //count++;
+                    matches++;
                 }
             }
             //some intervals that start at the same time as A may be before A in the order, we need to consider those as well:
@@ -484,13 +601,17 @@ public class Sequence {
                 } else {
                     int relationshipId = getRelationship(aStart, aEnd, bStart, bEnd, e);
                     if (relationshipId == shapelet.getRelationshipId()) {
-                        double cost = computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                        double cost = computeModelCost(relationshipId, aStart, aEnd, bStart, bEnd);//computeCost(relationshipId, shapelet, aStart, aEnd, bStart, bEnd);
+                       /* if (cost > count) {
+                            count = cost;
+                        }*/
                         count += cost;
-                        //count++;
+                        matches++;
                     }
                 }
             }
         }
+        // return matches > 0 ? count/matches : 0;
         return count;
     }
 

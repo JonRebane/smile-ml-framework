@@ -61,6 +61,14 @@ public class ShapeletFeatureMatrix {
 		shapeletFeatureMatrix[seqId][col] += value;
 	}
 
+	public void maxAt(int seqId,int dimensionA,int dimensionB,int relationshipId, double value){
+		int col = calcColumnIndex(dimensionA,dimensionB,relationshipId);
+		double oldval = shapeletFeatureMatrix[seqId][col];
+		if (value > oldval) {
+			shapeletFeatureMatrix[seqId][col] = value;
+		}
+	}
+
 	/***
 	 * Only public so we can do unit testing!
 	 * @param eventId1

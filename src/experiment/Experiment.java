@@ -70,15 +70,14 @@ public abstract class Experiment {
 	}
 
 	protected void printExperimentResults(Map<String, List<ClassifierResult>> results) {
+		System.out.println("------------------------------------------------------------------------------------------");
 		for(String name : results.keySet()){
-			System.out.println("------------------------------------------------------------------------------------------");
-			System.out.println("Results for data-set "+ name);
+
+			//System.out.println("Results for data-set "+ name);
 			//aggregate results:
 			List<ClassifierResult> thisDirResults = results.get(name);
 			for(ClassifierResult result : thisDirResults){
-				System.out.println(result.getClassifierName() + "average Accuracy: \t" + result.meanAccuracy());
-				System.out.println(result.getClassifierName() + "  average Classification Time: " + result.meanClassificationTimeMS() + "ms");
-				
+				System.out.printf("%s,%s,%f,%f,%d\n", name, result.getClassifierName(), result.meanAccuracy(), result.meanClassificationTimeMS(), Sequence.METHOD);
 			}
 		}
 	}
