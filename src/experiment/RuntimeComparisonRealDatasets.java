@@ -41,7 +41,7 @@ public class RuntimeComparisonRealDatasets {
 		System.out.println();
 		printSeq(1, 10, 1, 5, 15);
 		System.out.println(computeCost(rel, 1, 10, 1, 5));
-		
+
 
 
 
