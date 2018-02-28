@@ -2,8 +2,9 @@ package experiment;
 
 import data_structures.Sequence;
 import weka.classifiers.Classifier;
-import weka.classifiers.functions.LibSVM;
-import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.*;
+import weka.classifiers.lazy.IBk;
+import weka.classifiers.pmml.consumer.NeuralNetwork;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 
@@ -32,6 +33,19 @@ public class RuntimeComparisonRealDatasets {
     };
 
     static Function<Instances, Classifier> SVM = (Instances t) -> new SMO();
+    static Function<Instances, Classifier> ANN = (Instances t) -> {
+        Classifier classifier = new MultilayerPerceptron();
+        try {
+            classifier.setOptions(new String[]{"-H", "a,256,256"});
+            return classifier;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    };
+
+    static Function<Instances, Classifier> LOG = (Instances t) -> new Logistic();
+    static Function<Instances, Classifier> KNN = (Instances t) -> new IBk();
 
     public static void main(String[] args) throws Exception {
         Sequence.METHOD = 4;
