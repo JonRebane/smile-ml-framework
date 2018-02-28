@@ -1,83 +1,39 @@
 package experiment;
 
-import data_structures.Interval;
 import data_structures.Sequence;
+import weka.classifiers.Classifier;
+import weka.classifiers.functions.LibSVM;
+import weka.classifiers.functions.SMO;
+import weka.classifiers.trees.RandomForest;
+import weka.core.Instances;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import static java.lang.Double.max;
 import static java.lang.Math.abs;
 
 public class RuntimeComparisonRealDatasets {
 
-    public static void main(String[] args) throws Exception {
-        Sequence sequence = new Sequence(Arrays.asList(new Interval(0, 1, 10), new Interval(1, 5, 15)));
-
-        //int rel = sequence.getRelationship(1, 15, 1, 10, 0);
 
 
-        Random r = new Random(1);
-        int max = 30;
-        for (int i = 0; i < 0; i++) {
-            int ae = r.nextInt(max) + 1;
-            int as = r.nextInt(ae) + 1;
-
-            int be = r.nextInt(max) + 1;
-            int bs = r.nextInt(be) + 1;
-            testSeq(sequence, max, as, ae, bs, be);
+    static Function<Instances, Classifier> RF  = (trainInstances) -> {
+        Classifier classifier = new RandomForest();
+        Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
+        try {
+            classifier.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
+        } catch (Exception e) {
+            return null;
         }
+        return classifier;
+    };
 
+    static Function<Instances, Classifier> SVM = (Instances t) -> new SMO();
 
-//		double as = 5.5;
-//		double ae = 14.5;
-//		double bs = 1;
-//		double be = 10;
-        double as = 2;
-        double ae = 10;
-        double bs = 4;
-        double be = 8;
-        //testSeq(sequence, 15, as, ae, bs, be);
-
-        bs = 2;
-        be = 10;
-        as = 4;
-        ae = 8;
-       // testSeq(sequence, 15, as, ae, bs, be);
-
-        testSeq(sequence, 30, 2, 24, 1, 18);
-        testSeq(sequence, 30, 1, 18, 2, 24);
-        testSeq(sequence, 30, 6, 27, 1, 5);
-        testSeq(sequence, 30, 1, 5, 6, 27);
-        testSeq(sequence, 30, 5, 27, 1, 5);
-        testSeq(sequence, 30, 1, 5, 5, 27);
-        /*
-        a:(6,27) b:(1, 5)contains but shuld be followed by
-        :(2,24) b:(1, 18)contains but shuld be overlap
-a:(2,24) b:(1, 18)contains but shuld be overlap
-a:(2,24) b:(1, 16)contains but shuld be overlap
-a:(2,24) b:(1, 16)contains but shuld be overlap
-a:(2,24) b:(1, 14)contains but shuld be overlap
-a:(2,24) b:(1, 14)contains but shuld be overlap
-a:(2,24) b:(1, 12)contains but shuld be overlap
-a:(2,24) b:(1, 12)contains but shuld be overlap
-a:(2,24) b:(1, 12)contains but shuld be overlap
-a:(2,24) b:(1, 10)contains but shuld be overlap
-
-         */
-
-//		System.out.print("Relation: ");
-//		getRelationship(1,53,26,76);
-//		System.out.println();
-//		printSeq(1, 53, 26, 76, 100);
-//		System.out.println(sequence.computeCost(Sequence.OVERLAP, null, 1, 53, 26, 76));
-//		System.exit(0);
-//
-      //  System.exit(0);
-
+    public static void main(String[] args) throws Exception {
         Sequence.METHOD = 4;
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
@@ -85,7 +41,10 @@ a:(2,24) b:(1, 10)contains but shuld be overlap
         File singleLabelDatasetPath = new File("data/singleLabelDatasets");
         File multiLabelDatasetPath = new File("data/multiLabelDatasets");
         // seed: 13
-        RealDataExperiment experiment = new RealDataExperiment(pool, epsilon, shapeletFeatureCount, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
+
+        Function<Instances, Classifier> classifier = RF;
+
+        RealDataExperiment experiment = new RealDataExperiment(pool, classifier , epsilon, shapeletFeatureCount, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
         experiment.runExperiment();
         pool.shutdown();
     }

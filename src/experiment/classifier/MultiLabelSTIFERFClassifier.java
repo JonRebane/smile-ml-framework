@@ -4,13 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import data_structures.Sequence;
+import weka.classifiers.Classifier;
+import weka.core.Instances;
 
 public class MultiLabelSTIFERFClassifier extends AbstractSTIFERFClassifier {
 
-	public MultiLabelSTIFERFClassifier(Random random, List<Sequence> train, List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
-		super(random, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, pool);
+	public MultiLabelSTIFERFClassifier(Random random, Function<Instances, Classifier> supplier, List<Sequence> train, List<List<Integer>> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
+		super(random, supplier, modifyTrainSet(train,classIds), modifyClassIds(classIds), numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, pool);
 		// TODO Auto-generated constructor stub
 	}
 

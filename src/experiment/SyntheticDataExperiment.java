@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import data_structures.Sequence;
 import experiment.classifier.AbstractCompressedIBSM1NN;
@@ -17,8 +18,21 @@ import experiment.classifier.AbstractSTIFERFClassifier;
 import experiment.classifier.SingleLabelCompressedIBSM1NN;
 import experiment.classifier.SingleLabelIBSM1NN;
 import experiment.classifier.SingleLabelSTIFERFClassifier;
+import weka.classifiers.Classifier;
+import weka.classifiers.trees.RandomForest;
+import weka.core.Instances;
 
 public class SyntheticDataExperiment extends Experiment{
+	Function<Instances, Classifier> RANDOM_FOREST_BUILDER = (trainInstances) -> {
+		Classifier classifier = new RandomForest();
+		Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
+		try {
+			classifier.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
+		} catch (Exception e) {
+			return null;
+		}
+		return classifier;
+	};
 
 	private static final int MAX_REAL_DURATION = 5901;
 	private static final int MAX_REAL_NUM_DIMENSIONS = 63;
@@ -59,7 +73,7 @@ public class SyntheticDataExperiment extends Experiment{
 			//classifier training:
 			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),ibsmResult);
 			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelCompressedIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),compressedIBSMResult);
-			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelSTIFERFClassifier(random, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
+			measureSingleLabelClassificationPerformance(test,testClassIds,new SingleLabelSTIFERFClassifier(random, RANDOM_FOREST_BUILDER, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
 			PrintWriter out = new PrintWriter(new FileWriter( new File(outPath ),true));
 			String resultString = sequenceDuration +" " + ibsmResult.meanClassificationTimeMS() + " " + compressedIBSMResult.meanClassificationTimeMS() + " " + stifeResult.meanClassificationTimeMS();
 			out.println(resultString);

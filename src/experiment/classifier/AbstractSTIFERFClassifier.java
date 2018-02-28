@@ -5,9 +5,9 @@ import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import data_structures.CompressedEventTable;
-import data_structures.Pair;
 import data_structures.Sequence;
 import data_structures.ShapeletKey;
 import stife.distance.DistanceFeatureExtractor;
@@ -18,10 +18,9 @@ import stife.shapelet.evolution.Shapelet_Size2FitnessEvaluator;
 import stife.shapelet_size2.Shapelet_Size2;
 import stife.shapelet_size2.ShapeletExtractor;
 import stife.shapelet_size2.ShapeletFeatureMatrix;
-import stife.shapelet_size2_new.ShapeletSize2;
 import stife.static_metrics.StaticFeatureMatrix;
 import stife.static_metrics.StaticMetricExtractor;
-import weka.classifiers.trees.RandomForest;
+import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -39,7 +38,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     private int epsilon;
     private int sequenceDuration;
     private int numDimensions;
-    private RandomForest rf;
+    private Classifier classifier;
     private StaticMetricExtractor staticMetricFeatureExtractor;
     private FastVector allAttributes;
     private Attribute classAttribute;
@@ -48,7 +47,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
     private final Random random;
 
-    public AbstractSTIFERFClassifier(Random random, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
+    public AbstractSTIFERFClassifier(Random random, Function<Instances, Classifier> classifierSupplier, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
         this.random = random;
         this.epsilon = epsilon;
         this.sequenceDuration = sequenceDuration;
@@ -97,10 +96,9 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
         shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
         trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), "testdata" + File.separator + "stifeTrainData.csv");
-        rf = new RandomForest();
-        Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
-        rf.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
-        rf.buildClassifier(trainInstances);
+
+        classifier = classifierSupplier.apply(trainInstances);
+        classifier.buildClassifier(trainInstances);
         allAttributes = new FastVector();
         for (int col = 0; col < trainInstances.numAttributes(); col++) {
             allAttributes.addElement(trainInstances.attribute(col));
@@ -202,7 +200,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         instance.setDataset(instances);
         int predictedClass;
         try {
-            int predictedClassIndex = (int) rf.classifyInstance(instance);
+            int predictedClassIndex = (int) classifier.classifyInstance(instance);
             int a = Integer.parseInt(instance.classAttribute().value(predictedClassIndex));
             predictedClass = Integer.parseInt(classAttribute.value(predictedClassIndex));
             assert (predictedClass == a);

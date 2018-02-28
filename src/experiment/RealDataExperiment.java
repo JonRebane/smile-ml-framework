@@ -9,21 +9,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import data_structures.Sequence;
 import experiment.classifier.AbstractCompressedIBSM1NN;
 import experiment.classifier.AbstractIBSM1NN;
 import experiment.classifier.AbstractSTIFERFClassifier;
-import experiment.classifier.MultiLabelCompressedIBSM1NN;
-import experiment.classifier.MultiLabelIBSM1NN;
 import experiment.classifier.MultiLabelSTIFERFClassifier;
-import experiment.classifier.SingleLabelCompressedIBSM1NN;
-import experiment.classifier.SingleLabelIBSM1NN;
 import experiment.classifier.SingleLabelSTIFERFClassifier;
 import io.IOService;
+import weka.classifiers.Classifier;
+import weka.core.Instances;
 
 public class RealDataExperiment extends Experiment{
 
+	private final Function<Instances, Classifier> classifierBuilder;
 	private File singleLabelDataSetPath;
 	private int shapeletFeatureCount;
 	private int epsilon;
@@ -32,7 +32,7 @@ public class RealDataExperiment extends Experiment{
 	private int k;
 	private File multLabelDataSetPath;
 
-	public RealDataExperiment(ExecutorService pool, int epsilon, int shapeletFeatureCount, File singleLabelDatasetPath,File multLabelDataSetPath, Random random, int k) {
+	public RealDataExperiment(ExecutorService pool, Function<Instances, Classifier> classifierBuilder, int epsilon, int shapeletFeatureCount, File singleLabelDatasetPath, File multLabelDataSetPath, Random random, int k) {
 		this.pool = pool;
 		this.epsilon = epsilon;
 		this.shapeletFeatureCount = shapeletFeatureCount;
@@ -40,6 +40,7 @@ public class RealDataExperiment extends Experiment{
 		this.multLabelDataSetPath = multLabelDataSetPath;
 		this.random = random;
 		this.k=k;
+		this.classifierBuilder = classifierBuilder;
 	}
 
 	public void runExperiment() throws Exception {
@@ -48,14 +49,14 @@ public class RealDataExperiment extends Experiment{
 		boolean runMultiple = true;
 		if (runSingle) {
 			for(File dir : singleLabelDataSetPath.listFiles()){
-				//if(dir.isDirectory() && "AUSLAN2".equals(dir.getName())){
+				if(dir.isDirectory() && "AUSLAN2".equals(dir.getName())){
 				System.out.println("Processing " + dir.getName());
 				List<ClassifierResult> resultList = singleLabelClassifierEvaluation(dir);
 				for (ClassifierResult classifierResult : resultList) {
 					System.out.println(classifierResult.getClassifierName() + " acc: " + classifierResult.meanAccuracy());
 				}
 				results.put(dir.getName(), resultList);
-				//}
+				}
 			}
 		}
 
@@ -95,9 +96,16 @@ public class RealDataExperiment extends Experiment{
 			HashSet<Integer> trainWithoutTest = new HashSet<>(testIndices);
 			trainWithoutTest.removeAll(trainIndices);
 			assert(trainWithoutTest.size()==testIndices.size());
+
+			///// UNCOMMENT IF INCLUDING THE OTHER METHODS
 			//measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),ibsmResult);
 			//measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelCompressedIBSM1NN(train, trainClassIds, numDimensions, sequenceDuration),compressedIBSMResult);
-			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelSTIFERFClassifier(random, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
+
+
+
+
+
+			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
 		}
 		//save results:
 		List<ClassifierResult> resultList = Arrays.asList(ibsmResult,compressedIBSMResult,stifeResult);
@@ -136,7 +144,7 @@ public class RealDataExperiment extends Experiment{
 			System.out.println("1NN Training done");
 			measureMultiLabel1NNClassificationPerformance(test,testClassIds, classifier,compressedIBSMResult);*/
 			System.out.println("beginning stiferf");
-			MultiLabelSTIFERFClassifier classifier2 = new MultiLabelSTIFERFClassifier(random, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool);
+			MultiLabelSTIFERFClassifier classifier2 = new MultiLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool);
 			System.out.println("training done");
 			measureMultiLabelSTIFERFClassificationPerformance(test,testClassIds, classifier2,stifeResult);
 			System.out.println("-----------done with fold " +i);
