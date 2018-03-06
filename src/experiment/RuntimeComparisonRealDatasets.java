@@ -53,7 +53,7 @@ public class RuntimeComparisonRealDatasets {
     static Function<Instances, Classifier> KNN = (Instances t) -> new IBk();
 
     public static void main(String[] args) throws Exception {
-        Sequence.METHOD = 1;
+        Sequence.METHOD = 4;
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
         int shapeletFeatureCount = 200;

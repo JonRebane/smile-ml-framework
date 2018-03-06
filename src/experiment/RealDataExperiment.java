@@ -46,7 +46,7 @@ public class RealDataExperiment extends Experiment{
 	public void runExperiment() throws Exception {
 		Map<String,List<ClassifierResult>> results = new LinkedHashMap<>();
 		boolean runSingle = true;
-		boolean runMultiple = true;
+		boolean runMultiple = false;
 		if (runSingle) {
 			for(File dir : singleLabelDataSetPath.listFiles()){
 				//if(dir.isDirectory() && "AUSLAN2".equals(dir.getName())){

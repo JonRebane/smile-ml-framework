@@ -104,7 +104,7 @@ public abstract class Experiment {
 			//aggregate results:
 			List<ClassifierResult> thisDirResults = results.get(name);
 			for(ClassifierResult result : thisDirResults){
-				System.out.printf("%s,%s,%f,%f,%d\n", name, result.getClassifierName(), result.meanAccuracy(), result.meanClassificationTimeMS(), Sequence.METHOD);
+				System.out.printf("%s,%s,%f,%f,%f,%d\n", name, result.getClassifierName(), result.meanAccuracy(), result.meanClassificationTimeMS(), result.meanAUC(), Sequence.METHOD);
 			}
 		}
 	}
