@@ -3,6 +3,7 @@ package experiment;
 import data_structures.Sequence;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.*;
+import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.pmml.consumer.NeuralNetwork;
 import weka.classifiers.trees.RandomForest;
@@ -32,7 +33,11 @@ public class RuntimeComparisonRealDatasets {
         return classifier;
     };
 
-    static Function<Instances, Classifier> SVM = (Instances t) -> new SMO();
+    static Function<Instances, Classifier> SVM = (Instances t) -> {
+        SMO smo = new SMO();
+
+        return smo;
+    };
     static Function<Instances, Classifier> ANN = (Instances t) -> {
         Classifier classifier = new MultilayerPerceptron();
         try {
@@ -48,14 +53,14 @@ public class RuntimeComparisonRealDatasets {
     static Function<Instances, Classifier> KNN = (Instances t) -> new IBk();
 
     public static void main(String[] args) throws Exception {
-        Sequence.METHOD = 4;
+        Sequence.METHOD = 1;
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
-        int shapeletFeatureCount = 75;
+        int shapeletFeatureCount = 200;
         File singleLabelDatasetPath = new File("data/singleLabelDatasets");
         File multiLabelDatasetPath = new File("data/multiLabelDatasets");
         // seed: 13
-
+        // This can be changed to a different classifier
         Function<Instances, Classifier> classifier = RF;
 
         RealDataExperiment experiment = new RealDataExperiment(pool, classifier , epsilon, shapeletFeatureCount, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);

@@ -49,14 +49,16 @@ public class RealDataExperiment extends Experiment{
 		boolean runMultiple = true;
 		if (runSingle) {
 			for(File dir : singleLabelDataSetPath.listFiles()){
-				if(dir.isDirectory() && "AUSLAN2".equals(dir.getName())){
+				//if(dir.isDirectory() && "AUSLAN2".equals(dir.getName())){
 				System.out.println("Processing " + dir.getName());
 				List<ClassifierResult> resultList = singleLabelClassifierEvaluation(dir);
 				for (ClassifierResult classifierResult : resultList) {
-					System.out.println(classifierResult.getClassifierName() + " acc: " + classifierResult.meanAccuracy());
+					System.out.println(classifierResult.getClassifierName() +
+							" acc: " + classifierResult.meanAccuracy() +
+					        " auc: " + classifierResult.meanAUC());
 				}
 				results.put(dir.getName(), resultList);
-				}
+			//}
 			}
 		}
 

@@ -21,10 +21,8 @@ import stife.shapelet_size2.ShapeletFeatureMatrix;
 import stife.static_metrics.StaticFeatureMatrix;
 import stife.static_metrics.StaticMetricExtractor;
 import weka.classifiers.Classifier;
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.core.*;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NumericToNominal;
@@ -188,16 +186,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
     @Override
     public Integer classify(Sequence sequence) throws Exception {
-        Sequence mySeq = new Sequence(sequence);
-        mySeq.sortIntervals();
-        double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
-        double[] shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
-        double[] distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
-        Instances instances = new Instances("test instances", allAttributes, 1);
-        instances.setClassIndex(0);
-        Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures);
-        instances.add(instance);
-        instance.setDataset(instances);
+        Instance instance = makeInstance(sequence);
         int predictedClass;
         try {
             int predictedClassIndex = (int) classifier.classifyInstance(instance);
@@ -208,6 +197,41 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
             throw new ClassificationException(e);
         }
         return predictedClass;
+    }
+
+    private Instance makeInstance(Sequence sequence) throws TimeScaleException, InvalidEventTableDimensionException {
+        Sequence mySeq = new Sequence(sequence);
+        mySeq.sortIntervals();
+        double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
+        double[] shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
+        double[] distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+        Instances instances = new Instances("test instances", allAttributes, 1);
+        instances.setClassIndex(0);
+        Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures);
+        instances.add(instance);
+        instance.setDataset(instances);
+        return instance;
+    }
+
+    @Override
+    public int translateClass(int i) {
+        return classAttribute.indexOfValue(String.valueOf(i));
+    }
+
+    @Override
+    public List<double[]> predictProba(List<Sequence> sequences) throws TimeScaleException, InvalidEventTableDimensionException, ClassificationException {
+        List<double[]> vector = new ArrayList<>();
+        for (Sequence sequence : sequences) {
+            Instance instance = makeInstance(sequence);
+            try {
+                double[] dist = classifier.distributionForInstance(instance);
+                vector.add(dist);
+            } catch (Exception e) {
+                throw new ClassificationException(e);
+            }
+        }
+
+        return vector;
     }
 
     private Instance createInstance(double[] staticFeatures, double[] shapeletFeatures, double[] distanceFeatures) {
