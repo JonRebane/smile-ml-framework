@@ -5,20 +5,19 @@ import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import data_structures.CompressedEventTable;
-import data_structures.Pair;
 import data_structures.Sequence;
 import data_structures.ShapeletKey;
+import data_structures.eseq.*;
 import stife.distance.DistanceFeatureExtractor;
 import stife.distance.DistanceFeatureMatrix;
 import stife.distance.exceptions.InvalidEventTableDimensionException;
 import stife.distance.exceptions.TimeScaleException;
-import stife.shapelet.evolution.Shapelet_Size2FitnessEvaluator;
 import stife.shapelet_size2.Shapelet_Size2;
 import stife.shapelet_size2.ShapeletExtractor;
 import stife.shapelet_size2.ShapeletFeatureMatrix;
-import stife.shapelet_size2_new.ShapeletSize2;
 import stife.static_metrics.StaticFeatureMatrix;
 import stife.static_metrics.StaticMetricExtractor;
 import weka.classifiers.trees.RandomForest;
@@ -41,6 +40,8 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     private int numDimensions;
     private RandomForest rf;
     private StaticMetricExtractor staticMetricFeatureExtractor;
+    private List<Elet> eletFeatures;
+    private double[][] eletFeatureMatrix;
     private FastVector allAttributes;
     private Attribute classAttribute;
     private Instances trainInstances;
@@ -66,16 +67,10 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         //shapelets:
         shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS, classIds);
 
-//        Map<ShapeletKey, List<Shapelet_Size2>> shapelets = new HashMap<>();
-//        for (Sequence sequence : train) {
-//            Map<ShapeletKey, List<Shapelet_Size2>> sequenceShapelets = sequence.getAllShapeletWithKeys(epsilon);
-//            for (Map.Entry<ShapeletKey, List<Shapelet_Size2>> kv : sequenceShapelets.entrySet()) {
-//                List<Shapelet_Size2> all = shapelets.computeIfAbsent(kv.getKey(), l -> new ArrayList<>());
-//                all.addAll(kv.getValue());
-//            }
-//        }
-//        Shapelet_Size2FitnessEvaluator fitnessEvaluator = new Shapelet_Size2FitnessEvaluator(train, classIds, epsilon);
-//        this.database = createShapeletDatabase(fitnessEvaluator, shapelets);
+        int noElets = 100;
+        eletFeatures = new ArrayList<>();
+        eletFeatureMatrix = extractEletFeatureMatrix(train, noElets);
+
         this.database = null;
 
         //create all the jobs:
@@ -96,7 +91,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         }
 
         shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
-        trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), "testdata" + File.separator + "stifeTrainData.csv");
+        trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), eletFeatureMatrix,"testdata" + File.separator + "stifeTrainData.csv");
         rf = new RandomForest();
         Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
         rf.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
@@ -108,34 +103,75 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         classAttribute = trainInstances.classAttribute();
     }
 
-    private Map<ShapeletKey, Shapelet_Size2> createShapeletDatabase(Shapelet_Size2FitnessEvaluator fitnessEvaluator, Map<ShapeletKey, List<Shapelet_Size2>> shapelets) {
-        Map<ShapeletKey, Shapelet_Size2> database = new HashMap<>();
-        for (Map.Entry<ShapeletKey, List<Shapelet_Size2>> kv : shapelets.entrySet()) {
-        /*    Shapelet_Size2 bestShapelet = null;
-            double bestSoFar = Double.NEGATIVE_INFINITY;
-            List<Shapelet_Size2> value = kv.getValue();
-            Collections.shuffle(value);
-            int end = (int) Math.round(value.size() * 0.1)+1;
-            //System.out.println(end);
-            for (Shapelet_Size2 s : value.subList(0, end)) {
-                double fitness = fitnessEvaluator.getFitness(s);
-                if (fitness > bestSoFar) {
-                    bestShapelet = s;
-                    bestSoFar = fitness;
+    private double[][] extractEletFeatureMatrix(List<Sequence> train, int noElets) {
+        double[][] distances = new double[train.size()][noElets];
+        List<List<DefaultHashMap<String, Short>>> allExamples = new ArrayList<>();
+        int maxSize = 100;
+        int check = 0;
+        for (Sequence sequence : train) {
+            check = check + 1;
+            List<DefaultHashMap<String, Short>> temp = convertToVectors(sequence);
+            allExamples.add(temp);
+            if (temp.size() < maxSize)
+                maxSize = temp.size();
+        }
+
+        for (int i = 0; i < noElets; i++) {
+            int index = this.random.nextInt(train.size());
+            List<DefaultHashMap<String, Short>> vecSeq = allExamples.get(index);
+
+            int query_length = this.random.nextInt(maxSize - 1) + 1;
+            int start = this.random.nextInt(vecSeq.size() - query_length);
+
+            List<DefaultHashMap<String, Short>> query = vecSeq.subList(start, start + query_length);
+            int query_active_time_points = 0;
+            for (int j = 0; j < query_length; j++) {
+                query_active_time_points += query.get(j).size();
+            }
+
+            DefaultHashMap<String, Integer> queryAlphabetMap = new DefaultHashMap<String, Integer>(0);
+            for (DefaultHashMap<String, Short> vector : query) {
+                for (Map.Entry<String, Short> entry : vector.entrySet()) {
+                    String key = entry.getKey();
+                    queryAlphabetMap.put(key, 1);
                 }
             }
-            database.put(kv.getKey(), bestShapelet);*/
-
-
-            //System.out.println("best shapelet " + bestShapelet + " with fitness " + bestSoFar);
-            database.put(kv.getKey(), kv.getValue().get(random.nextInt(kv.getValue().size())));
+            String[] queryAlphabet = queryAlphabetMap.keySet().toArray(new String[queryAlphabetMap.keySet().size()]);
+            HashMap<String, Double> queryStatistics = Estreams_Euclidean4.computeStreamStats(query);
+            int[] density = Estreams_Euclidean4.computeTiDEOrder(query);
+            int queryActivePoints = Estreams_Euclidean4.computeNumberActiveTimePoints(query);
+            Elet elet = new Elet(query, query_active_time_points, queryAlphabetMap, queryAlphabet, queryStatistics, density, queryActivePoints);
+            eletFeatures.add(elet);
         }
-        return database;
+
+        for (int i = 0; i < train.size(); i++) {
+            List<DefaultHashMap<String, Short>> a = allExamples.get(i);
+            int finalI = i;
+            IntStream.range(0, noElets).parallel().forEach(j -> {
+                Elet b = eletFeatures.get(j);
+                double dist = Estreams_Euclidean4.euclideannew(a, b.query, b.queryAlphabet, b.density, b.queryStatistics,
+                        true, false, false,
+                        true, true, b.queryActivePoints, 10);
+                distances[finalI][j] = dist;
+
+            });
+        }
+        return distances;
     }
 
-    private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, StaticFeatureMatrix staticFeatureMatrix, double[][] distanceFeatureMatrix, double[][] shapeletFeatureMatrix, String tempFilePath) throws Exception {
+    private List<DefaultHashMap<String, Short>> convertToVectors(Sequence sequence) {
+        ArrayList<DefaultHashMap<String, Short>> vec_seq = Estreams_Euclidean4.transform_to_vectors(sequence);
+        List<DefaultHashMap<String, Short>> temp = new ArrayList<>();
+        for (DefaultHashMap<String, Short> curr_vec : vec_seq) {
+            if (curr_vec.size() > 0) //remove empty time points
+                temp.add(curr_vec);
+        }
+        return temp;
+    }
+
+    private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, StaticFeatureMatrix staticFeatureMatrix, double[][] distanceFeatureMatrix, double[][] shapeletFeatureMatrix, double[][] eletFeatureMatrix, String tempFilePath) throws Exception {
         PrintStream out = new PrintStream(new File(tempFilePath));
-        int numTotalColsWithoutClass = staticFeatureMatrix.numCols() + distanceFeatureMatrix[0].length + shapeletFeatureMatrix[0].length;
+        int numTotalColsWithoutClass = staticFeatureMatrix.numCols() + distanceFeatureMatrix[0].length + shapeletFeatureMatrix[0].length + eletFeatureMatrix[0].length;
         for (int col = 0; col <= numTotalColsWithoutClass; col++) {
             out.print("Col_" + col);
             if (col != numTotalColsWithoutClass) {
@@ -156,8 +192,12 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
             }
             for (int col = 0; col < distanceFeatureMatrix[0].length; col++) {
                 double val = distanceFeatureMatrix[row][col];
+                out.print(val + ",");
+            }
+            for (int col = 0; col < eletFeatureMatrix[0].length; col++) {
+                double val = eletFeatureMatrix[row][col];
                 out.print(val);
-                if (col != distanceFeatureMatrix[0].length - 1) {
+                if (col != eletFeatureMatrix[0].length - 1) {
                     out.print(",");
                 }
             }
@@ -195,9 +235,10 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
         double[] shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
         double[] distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+        double[] eletFeatures = onlineEletFeatures(mySeq);
         Instances instances = new Instances("test instances", allAttributes, 1);
         instances.setClassIndex(0);
-        Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures);
+        Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures, eletFeatures);
         instances.add(instance);
         instance.setDataset(instances);
         int predictedClass;
@@ -212,7 +253,21 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         return predictedClass;
     }
 
-    private Instance createInstance(double[] staticFeatures, double[] shapeletFeatures, double[] distanceFeatures) {
+    private double[] onlineEletFeatures(Sequence sequence) {
+        double[] values = new double[eletFeatures.size()];
+        List<DefaultHashMap<String, Short>> a = convertToVectors(sequence);
+
+        IntStream.range(0, eletFeatures.size()).parallel().forEach(i -> {
+            Elet b = eletFeatures.get(i);
+            double dist = Estreams_Euclidean4.euclideannew(a, b.query, b.queryAlphabet, b.density, b.queryStatistics,
+                    true, false, false,
+                    true, true, b.queryActivePoints, 10);
+            values[i] = dist;
+        });
+        return values;
+    }
+
+    private Instance createInstance(double[] staticFeatures, double[] shapeletFeatures, double[] distanceFeatures, double[] eletFeatures) {
         Instance curInstance = new Instance(allAttributes.size());
         //curInstance.setClassMissing();
         int instanceCol = 1;
@@ -231,6 +286,12 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
             curInstance.setValue((Attribute) allAttributes.elementAt(instanceCol), val);
             instanceCol++;
         }
+        for (int i = 0; i < eletFeatures.length; i++) {
+            double val = eletFeatures[i];
+            curInstance.setValue((Attribute) allAttributes.elementAt(instanceCol), val);
+            instanceCol++;
+        }
+
         curInstance.setMissing(classAttribute);
         return curInstance;
     }

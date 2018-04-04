@@ -78,7 +78,7 @@ a:(2,24) b:(1, 10)contains but shuld be overlap
 //
       //  System.exit(0);
 
-        Sequence.METHOD = 4;
+        Sequence.METHOD = 1;
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
         int shapeletFeatureCount = 75;
