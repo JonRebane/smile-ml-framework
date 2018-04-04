@@ -24,6 +24,8 @@ import weka.core.Instances;
 public class RealDataExperiment extends Experiment{
 
 	private final Function<Instances, Classifier> classifierBuilder;
+	private final int eletFeatureCount;
+	private final String method;
 	private File singleLabelDataSetPath;
 	private int shapeletFeatureCount;
 	private int epsilon;
@@ -32,10 +34,12 @@ public class RealDataExperiment extends Experiment{
 	private int k;
 	private File multLabelDataSetPath;
 
-	public RealDataExperiment(ExecutorService pool, Function<Instances, Classifier> classifierBuilder, int epsilon, int shapeletFeatureCount, File singleLabelDatasetPath, File multLabelDataSetPath, Random random, int k) {
+	public RealDataExperiment(ExecutorService pool, Function<Instances, Classifier> classifierBuilder, int epsilon, int shapeletFeatureCount, int eletFeatureCount, String method, File singleLabelDatasetPath, File multLabelDataSetPath, Random random, int k) {
 		this.pool = pool;
 		this.epsilon = epsilon;
 		this.shapeletFeatureCount = shapeletFeatureCount;
+		this.eletFeatureCount = eletFeatureCount;
+		this.method = method;
 		this.singleLabelDataSetPath = singleLabelDatasetPath;
 		this.multLabelDataSetPath = multLabelDataSetPath;
 		this.random = random;
@@ -107,7 +111,7 @@ public class RealDataExperiment extends Experiment{
 
 
 
-			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool),stifeResult);
+			measureSingleLabelClassificationPerformance(test,testClassIds, new SingleLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount, eletFeatureCount, method, pool),stifeResult);
 		}
 		//save results:
 		List<ClassifierResult> resultList = Arrays.asList(ibsmResult,compressedIBSMResult,stifeResult);
@@ -146,7 +150,7 @@ public class RealDataExperiment extends Experiment{
 			System.out.println("1NN Training done");
 			measureMultiLabel1NNClassificationPerformance(test,testClassIds, classifier,compressedIBSMResult);*/
 			System.out.println("beginning stiferf");
-			MultiLabelSTIFERFClassifier classifier2 = new MultiLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount,pool);
+			MultiLabelSTIFERFClassifier classifier2 = new MultiLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration,epsilon,shapeletFeatureCount, eletFeatureCount, method, pool);
 			System.out.println("training done");
 			measureMultiLabelSTIFERFClassificationPerformance(test,testClassIds, classifier2,stifeResult);
 			System.out.println("-----------done with fold " +i);

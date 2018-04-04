@@ -2,10 +2,13 @@ package experiment;
 
 import data_structures.Sequence;
 import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.bayes.NaiveBayesMultinomial;
 import weka.classifiers.functions.*;
 import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.pmml.consumer.NeuralNetwork;
+import weka.classifiers.trees.J48;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 
@@ -21,8 +24,7 @@ import static java.lang.Math.abs;
 public class RuntimeComparisonRealDatasets {
 
 
-
-    static Function<Instances, Classifier> RF  = (trainInstances) -> {
+    static Function<Instances, Classifier> RF = (trainInstances) -> {
         Classifier classifier = new RandomForest();
         Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
         try {
@@ -35,36 +37,35 @@ public class RuntimeComparisonRealDatasets {
 
     static Function<Instances, Classifier> SVM = (Instances t) -> {
         SMO smo = new SMO();
-
+        smo.setKernel(new RBFKernel());
         return smo;
     };
-    static Function<Instances, Classifier> ANN = (Instances t) -> {
-        Classifier classifier = new MultilayerPerceptron();
-        try {
-            classifier.setOptions(new String[]{"-H", "a,256,256"});
-            return classifier;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+
+    static Function<Instances, Classifier> DT = (Instances t) -> {
+        Classifier classifier = new J48();
+        return classifier;
+
     };
 
-    static Function<Instances, Classifier> LOG = (Instances t) -> new Logistic();
-    static Function<Instances, Classifier> KNN = (Instances t) -> new IBk();
+    static Function<Instances, Classifier> LR = (Instances t) -> new Logistic();
+
+    static Function<Instances, Classifier> NB = (Instances t) -> new NaiveBayesMultinomial();
 
 
     public static void main(String[] args) throws Exception {
-        Sequence.METHOD = 1;
+        Sequence.METHOD = 1; // 1 == a and 3 == b
+        String method = "1+2+3+4";
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
         int shapeletFeatureCount = 75;
+        int eletFeatureCount = 75;
         File singleLabelDatasetPath = new File("data/singleLabelDatasets");
         File multiLabelDatasetPath = new File("data/multiLabelDatasets");
-        // seed: 13
+
         // This can be changed to a different classifier
         Function<Instances, Classifier> classifier = RF;
 
-        RealDataExperiment experiment = new RealDataExperiment(pool, classifier , epsilon, shapeletFeatureCount, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
+        RealDataExperiment experiment = new RealDataExperiment(pool, classifier, epsilon, shapeletFeatureCount, eletFeatureCount, method, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
         experiment.runExperiment();
         pool.shutdown();
     }

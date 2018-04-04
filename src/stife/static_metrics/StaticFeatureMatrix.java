@@ -20,4 +20,8 @@ public class StaticFeatureMatrix {
 		return matrix[row][col];
 	}
 
+	public double[][] getMatrix(){
+		return matrix;
+	}
+
 }

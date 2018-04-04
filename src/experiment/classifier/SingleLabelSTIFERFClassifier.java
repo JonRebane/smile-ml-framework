@@ -11,8 +11,17 @@ import weka.core.Instances;
 
 public class SingleLabelSTIFERFClassifier extends AbstractSTIFERFClassifier {
 
-	public SingleLabelSTIFERFClassifier(Random random, Function<Instances, Classifier> consumer, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
-		super(random, consumer, train, classIds, numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, pool);
-	}
+    public SingleLabelSTIFERFClassifier(Random random,
+                                        Function<Instances, Classifier> consumer,
+                                        List<Sequence> train, List<Integer> classIds,
+                                        int numDimensions,
+                                        int sequenceDuration,
+                                        int epsilon,
+                                        int shapeletFeatureCount,
+                                        int eletFeatureCount,
+                                        String method,
+                                        ExecutorService pool) throws Exception {
+        super(random, consumer, train, classIds, numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, eletFeatureCount, method, pool);
+    }
 
 }

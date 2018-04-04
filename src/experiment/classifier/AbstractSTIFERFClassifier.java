@@ -33,6 +33,8 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
 
     private final Map<ShapeletKey, Shapelet_Size2> database;
+    private final int eletFeaturesCount;
+    private final String method;
     private DistanceFeatureMatrix distanceFeatureMatrix;
     private ShapeletFeatureMatrix shapeletFeatureMatrix;
     private int epsilon;
@@ -49,7 +51,17 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
     private final Random random;
 
-    public AbstractSTIFERFClassifier(Random random, Function<Instances, Classifier> classifierSupplier, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
+    public AbstractSTIFERFClassifier(Random random,
+                                     Function<Instances, Classifier> classifierSupplier,
+                                     List<Sequence> train,
+                                     List<Integer> classIds,
+                                     int numDimensions,
+                                     int sequenceDuration,
+                                     int epsilon,
+                                     int shapeletFeatureCount,
+                                     int eletFeatureCount,
+                                     String method,
+                                     ExecutorService pool) throws Exception {
         this.random = random;
         this.epsilon = epsilon;
         this.sequenceDuration = sequenceDuration;
@@ -67,11 +79,12 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         //shapelets:
         shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS, classIds);
 
-        int noElets = 100;
+        this.eletFeaturesCount = eletFeatureCount;
         eletFeatures = new ArrayList<>();
-        eletFeatureMatrix = extractEletFeatureMatrix(train, noElets);
+        eletFeatureMatrix = extractEletFeatureMatrix(train);
 
         this.database = null;
+        this.method = method;
 
         //create all the jobs:
         int numSequencesPerJob = 10;
@@ -91,7 +104,25 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         }
 
         shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
-        trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), eletFeatureMatrix,"testdata" + File.separator + "stifeTrainData.csv");
+        double[][] staticMatrix = staticFeatureMatrix.getMatrix();
+        double[][] distanceMatrix = distanceFeatureMatrix.getMatrix();
+        double[][] shapeletMatrix = shapeletFeatureMatrix.getMatrix();
+        double[][] eletMatrix = eletFeatureMatrix;
+
+        if ("1".equals(method)) {
+            distanceMatrix = new double[train.size()][0];
+            shapeletMatrix = new double[train.size()][0];
+            eletMatrix = new double[train.size()][0];
+        } else if ("1+2".equals(method)) {
+            shapeletMatrix = new double[train.size()][0];
+            eletMatrix = new double[train.size()][0];
+        } else if ("1+2+3".equals(method)) {
+            eletMatrix = new double[train.size()][0];
+        } else if (!"1+2+3+4".equals(method)) {
+            throw new IllegalArgumentException("illegal method");
+        }
+
+        trainInstances = buildInstances(train, classIds, staticMatrix, distanceMatrix, shapeletMatrix, eletMatrix, "testdata" + File.separator + "stifeTrainData.csv");
         classifier = classifierSupplier.apply(trainInstances);
         classifier.buildClassifier(trainInstances);
         allAttributes = new FastVector();
@@ -101,8 +132,8 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         classAttribute = trainInstances.classAttribute();
     }
 
-    private double[][] extractEletFeatureMatrix(List<Sequence> train, int noElets) {
-        double[][] distances = new double[train.size()][noElets];
+    private double[][] extractEletFeatureMatrix(List<Sequence> train) {
+        double[][] distances = new double[train.size()][eletFeaturesCount];
         List<List<DefaultHashMap<String, Short>>> allExamples = new ArrayList<>();
         int maxSize = 100;
         int check = 0;
@@ -114,7 +145,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
                 maxSize = temp.size();
         }
 
-        for (int i = 0; i < noElets; i++) {
+        for (int i = 0; i < eletFeaturesCount; i++) {
             int index = this.random.nextInt(train.size());
             List<DefaultHashMap<String, Short>> vecSeq = allExamples.get(index);
 
@@ -145,7 +176,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         for (int i = 0; i < train.size(); i++) {
             List<DefaultHashMap<String, Short>> a = allExamples.get(i);
             int finalI = i;
-            IntStream.range(0, noElets).parallel().forEach(j -> {
+            IntStream.range(0, eletFeaturesCount).parallel().forEach(j -> {
                 Elet b = eletFeatures.get(j);
                 double dist = Estreams_Euclidean4.euclideannew(a, b.query, b.queryAlphabet, b.density, b.queryStatistics,
                         true, false, false,
@@ -167,9 +198,9 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         return temp;
     }
 
-    private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, StaticFeatureMatrix staticFeatureMatrix, double[][] distanceFeatureMatrix, double[][] shapeletFeatureMatrix, double[][] eletFeatureMatrix, String tempFilePath) throws Exception {
+    private Instances buildInstances(List<Sequence> sequences, List<Integer> classIds, double[][] staticFeatureMatrix, double[][] distanceFeatureMatrix, double[][] shapeletFeatureMatrix, double[][] eletFeatureMatrix, String tempFilePath) throws Exception {
         PrintStream out = new PrintStream(new File(tempFilePath));
-        int numTotalColsWithoutClass = staticFeatureMatrix.numCols() + distanceFeatureMatrix[0].length + shapeletFeatureMatrix[0].length + eletFeatureMatrix[0].length;
+        int numTotalColsWithoutClass = staticFeatureMatrix[0].length + distanceFeatureMatrix[0].length + shapeletFeatureMatrix[0].length + eletFeatureMatrix[0].length;
         for (int col = 0; col <= numTotalColsWithoutClass; col++) {
             out.print("Col_" + col);
             if (col != numTotalColsWithoutClass) {
@@ -180,25 +211,26 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         }
         for (int row = 0; row < sequences.size(); row++) {
             out.print(classIds.get(row) + ",");
-            for (int col = 0; col < staticFeatureMatrix.numCols(); col++) {
-                double val = staticFeatureMatrix.get(row, col);
-                out.print(val + ",");
+
+            StringJoiner joiner = new StringJoiner(",", "", "");
+            for (int col = 0; col < staticFeatureMatrix[0].length; col++) {
+                double val = staticFeatureMatrix[row][col];
+                joiner.add(val + "");
             }
             for (int col = 0; col < shapeletFeatureMatrix[0].length; col++) {
                 double val = shapeletFeatureMatrix[row][col];
-                out.print(val + ",");
+                joiner.add(val + "");
             }
             for (int col = 0; col < distanceFeatureMatrix[0].length; col++) {
                 double val = distanceFeatureMatrix[row][col];
-                out.print(val + ",");
+                joiner.add(val + "");
             }
             for (int col = 0; col < eletFeatureMatrix[0].length; col++) {
                 double val = eletFeatureMatrix[row][col];
-                out.print(val);
-                if (col != eletFeatureMatrix[0].length - 1) {
-                    out.print(",");
-                }
+                joiner.add(val + "");
             }
+            out.print(joiner.toString());
+
             if (row != sequences.size() - 1) {
                 out.println();
             }
@@ -245,9 +277,26 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         Sequence mySeq = new Sequence(sequence);
         mySeq.sortIntervals();
         double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
-        double[] shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
-        double[] distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
-        double[] eletFeatures = onlineEletFeatures(mySeq);
+        double[] shapeletFeatures = new double[0];
+        double[] distanceFeatures = new double[0];
+        double[] eletFeatures = new double[0];
+        if ("1".equals(method)) {
+
+        } else if ("1+2".equals(this.method)) {
+            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+        } else if ("1+2+3".equals(method)) {
+            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+            shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
+        } else if ("1+2+3+4".equals(method)) {
+            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+            shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
+            eletFeatures = onlineEletFeatures(mySeq);
+        } else {
+            throw new IllegalArgumentException("illegal method");
+        }
+
+
+
         Instances instances = new Instances("test instances", allAttributes, 1);
         instances.setClassIndex(0);
         Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures, eletFeatures);
