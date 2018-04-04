@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
+import java.util.function.Function;
+
 
 import data_structures.CompressedEventTable;
 import data_structures.Sequence;
@@ -20,11 +22,9 @@ import stife.shapelet_size2.ShapeletExtractor;
 import stife.shapelet_size2.ShapeletFeatureMatrix;
 import stife.static_metrics.StaticFeatureMatrix;
 import stife.static_metrics.StaticMetricExtractor;
-import weka.classifiers.trees.RandomForest;
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.classifiers.Classifier;
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.core.*;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NumericToNominal;
@@ -38,7 +38,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     private int epsilon;
     private int sequenceDuration;
     private int numDimensions;
-    private RandomForest rf;
+    private Classifier classifier;
     private StaticMetricExtractor staticMetricFeatureExtractor;
     private List<Elet> eletFeatures;
     private double[][] eletFeatureMatrix;
@@ -49,7 +49,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
     private final Random random;
 
-    public AbstractSTIFERFClassifier(Random random, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
+    public AbstractSTIFERFClassifier(Random random, Function<Instances, Classifier> classifierSupplier, List<Sequence> train, List<Integer> classIds, int numDimensions, int sequenceDuration, int epsilon, int shapeletFeatureCount, ExecutorService pool) throws Exception {
         this.random = random;
         this.epsilon = epsilon;
         this.sequenceDuration = sequenceDuration;
@@ -92,10 +92,8 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
         shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
         trainInstances = buildInstances(train, classIds, staticFeatureMatrix, distanceFeatureMatrix.getMatrix(), shapeletFeatureMatrix.getMatrix(), eletFeatureMatrix,"testdata" + File.separator + "stifeTrainData.csv");
-        rf = new RandomForest();
-        Integer numFeaturesPerTree = (int) Math.sqrt(trainInstances.numAttributes() - 1);
-        rf.setOptions(new String[]{"-I", "500", "-K", numFeaturesPerTree.toString(), "-S", "123"});
-        rf.buildClassifier(trainInstances);
+        classifier = classifierSupplier.apply(trainInstances);
+        classifier.buildClassifier(trainInstances);
         allAttributes = new FastVector();
         for (int col = 0; col < trainInstances.numAttributes(); col++) {
             allAttributes.addElement(trainInstances.attribute(col));
@@ -230,6 +228,20 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
 
     @Override
     public Integer classify(Sequence sequence) throws Exception {
+        Instance instance = makeInstance(sequence);
+        int predictedClass;
+        try {
+            int predictedClassIndex = (int) classifier.classifyInstance(instance);
+            int a = Integer.parseInt(instance.classAttribute().value(predictedClassIndex));
+            predictedClass = Integer.parseInt(classAttribute.value(predictedClassIndex));
+            assert (predictedClass == a);
+        } catch (Exception e) {
+            throw new ClassificationException(e);
+        }
+        return predictedClass;
+    }
+
+    private Instance makeInstance(Sequence sequence) throws TimeScaleException, InvalidEventTableDimensionException {
         Sequence mySeq = new Sequence(sequence);
         mySeq.sortIntervals();
         double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
@@ -241,16 +253,28 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         Instance instance = createInstance(staticFeatures, shapeletFeatures, distanceFeatures, eletFeatures);
         instances.add(instance);
         instance.setDataset(instances);
-        int predictedClass;
-        try {
-            int predictedClassIndex = (int) rf.classifyInstance(instance);
-            int a = Integer.parseInt(instance.classAttribute().value(predictedClassIndex));
-            predictedClass = Integer.parseInt(classAttribute.value(predictedClassIndex));
-            assert (predictedClass == a);
-        } catch (Exception e) {
-            throw new ClassificationException(e);
+        return instance;
+    }
+
+    @Override
+    public int translateClass(int i) {
+        return classAttribute.indexOfValue(String.valueOf(i));
+    }
+
+    @Override
+    public List<double[]> predictProba(List<Sequence> sequences) throws TimeScaleException, InvalidEventTableDimensionException, ClassificationException {
+        List<double[]> vector = new ArrayList<>();
+        for (Sequence sequence : sequences) {
+            Instance instance = makeInstance(sequence);
+            try {
+                double[] dist = classifier.distributionForInstance(instance);
+                vector.add(dist);
+            } catch (Exception e) {
+                throw new ClassificationException(e);
+            }
         }
-        return predictedClass;
+
+        return vector;
     }
 
     private double[] onlineEletFeatures(Sequence sequence) {

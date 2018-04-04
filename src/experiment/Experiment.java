@@ -6,6 +6,11 @@ import experiment.classifier.MultiLabelSTIFERFClassifier;
 import experiment.classifier.STIClassifier;
 import stife.distance.exceptions.InvalidEventTableDimensionException;
 import stife.distance.exceptions.TimeScaleException;
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.classifiers.evaluation.ThresholdCurve;
+import weka.core.FastVector;
+import weka.core.Instances;
+import weka.core.Utils;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -15,7 +20,7 @@ import java.util.Map;
 public abstract class Experiment {
 
 	protected void measureSingleLabelClassificationPerformance(List<Sequence> test, List<Integer> testClassIds, STIClassifier<Integer> classifier,ClassifierResult classifierResult) throws IOException, Exception {
-		int correct = 0;
+		double correct = 0;
 		int incorrect = 0;
 		for(int i=0;i<test.size();i++){
 			long before = ExperimentUtil.getCpuTime();
@@ -28,7 +33,29 @@ public abstract class Experiment {
 				incorrect++;
 			}
 		}
-		classifierResult.addAccuracyValue(correct / (double) (correct+incorrect));	
+		double accuracy = correct / (double) (correct + incorrect);
+		classifierResult.addAccuracyValue(accuracy);
+
+		FastVector predictions = new FastVector();
+		List<double[]> probas = classifier.predictProba(test);
+		correct = 0;
+		for (int i = 0; i < testClassIds.size(); i++) {
+			double[] proba = probas.get(i);
+			int cls = classifier.translateClass(testClassIds.get(i));
+			predictions.addElement(new NominalPrediction(cls, proba));
+			if (cls == Utils.maxIndex(proba)) {
+				correct++;
+			}
+		}
+		ThresholdCurve curve = new ThresholdCurve();
+		Instances auc = curve.getCurve(predictions);
+        double rocArea = ThresholdCurve.getROCArea(auc);
+        if (Double.isNaN(rocArea)) {
+            rocArea = 0;
+        }
+        classifierResult.addAucValue(rocArea);
+
+        assert correct / testClassIds.size() == accuracy;
 	}
 	
 	protected void measureMultiLabel1NNClassificationPerformance(List<Sequence> test, List<List<Integer>> testClassIds, STIClassifier<List<Integer>> classifier,ClassifierResult classifierResult) throws TimeScaleException, InvalidEventTableDimensionException, ClassificationException, IOException, Exception{
@@ -77,7 +104,7 @@ public abstract class Experiment {
 			//aggregate results:
 			List<ClassifierResult> thisDirResults = results.get(name);
 			for(ClassifierResult result : thisDirResults){
-				System.out.printf("%s,%s,%f,%f,%d\n", name, result.getClassifierName(), result.meanAccuracy(), result.meanClassificationTimeMS(), Sequence.METHOD);
+				System.out.printf("%s,%s,%f,%f,%f,%d\n", name, result.getClassifierName(), result.meanAccuracy(), result.meanClassificationTimeMS(), result.meanAUC(), Sequence.METHOD);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 package experiment;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,6 +8,7 @@ public class ClassifierResult {
 	
 	private String classifierName;
 	private List<Double> accuracyValues = new LinkedList<>();
+	private List<Double> aucValue = new ArrayList<>();
 	private List<Long> classificationTimes = new LinkedList<>(); //unit is nanoseconds
 	
 	public ClassifierResult(String classifierName) {
@@ -17,6 +19,10 @@ public class ClassifierResult {
 	public void addAccuracyValue(double accuracy){
 		accuracyValues.add(accuracy);
 	}
+
+	public void addAucValue(double auc) {
+		aucValue.add(auc);
+	}
 	
 	public void addClassificationTime(long time){
 		classificationTimes.add(time);
@@ -24,6 +30,14 @@ public class ClassifierResult {
 
 	public String getClassifierName() {
 		return classifierName;
+	}
+
+	public double meanAUC(){
+		double auc = 0;
+		for (Double v : aucValue) {
+			auc += v;
+		}
+		return auc / aucValue.size();
 	}
 
 	public double meanAccuracy() {
