@@ -908,7 +908,7 @@ public class Estreams_Euclidean4 {
 		
 		// For each time-point
 		//int target_size = target.size();
-		int query_size = query.size();
+		int query_size = Math.min(query.size(), target.size());
 		for( int i = 0; i < query_size; i++)
 		{
 			for(String key: queryAlphabet)
@@ -1242,7 +1242,7 @@ public class Estreams_Euclidean4 {
 		for(int i = 0; i < alphabetDensityOrder.length; i++)
 		{ 
 			String label = alphabetDensityOrder[i];
-			for(int j = 0; j < query.size(); j++)
+			for(int j = 0; j < Math.min(query.size(), window.size()); j++)
 			{
 				score += Math.abs( query.get(j).get(label) - window.get(j).get(label));
 			}
@@ -1832,7 +1832,7 @@ public class Estreams_Euclidean4 {
 		for(int i = 0; i < counts.length; i++)
 		{ 
 			String label = counts[i].getLeft();
-			for(int j = 0; j < query.size(); j++)
+			for(int j = 0; j < Math.min(window.size(), query.size()); j++)
 			{
 				score += Math.abs( query.get(j).get(label) - window.get(j).get(label));
 			}
@@ -1856,7 +1856,7 @@ public class Estreams_Euclidean4 {
 			System.out.println("You are using both density approaches!! which one do you want?");
 		long totalWindows = 0;
 		List<DefaultHashMap<String,Short>> currentWindow = new ArrayList<DefaultHashMap<String,Short>>();
-		for(int i=0; i < query.size(); i++)
+		for(int i=0; i < Math.min(query.size(), target.size()); i++)
 			currentWindow.add( target.get(i));
 		
 		int totalActivePoints = 0;
@@ -1906,7 +1906,7 @@ public class Estreams_Euclidean4 {
 		long estimatedTime = System.nanoTime() - startTime;
 		
 		// Sliding window
-		ListIterator<DefaultHashMap<String,Short>> it = target.listIterator(query.size()); //start from query.size() element
+		ListIterator<DefaultHashMap<String,Short>> it = target.listIterator(Math.min(target.size()-1, query.size())); //start from query.size() element
 		int score, lowerBoundScore; float [] score_and_pruning; int secondLBdifference;
 		int prunedComparisons=0; float early_abandons = 0; int secondPrunedComparisons = 0; int o1prunedComparisons = 0; //some stats
 		

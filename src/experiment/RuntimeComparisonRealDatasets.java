@@ -54,7 +54,7 @@ public class RuntimeComparisonRealDatasets {
 
     public static void main(String[] args) throws Exception {
         Sequence.METHOD = 1; // 1 == a and 3 == b
-        String method = "1+2+3+4";
+        String method = "1+2+3a";
         ExecutorService pool = Executors.newCachedThreadPool();
         int epsilon = 5;
         int shapeletFeatureCount = 75;
@@ -62,7 +62,6 @@ public class RuntimeComparisonRealDatasets {
         File singleLabelDatasetPath = new File("data/singleLabelDatasets");
         File multiLabelDatasetPath = new File("data/multiLabelDatasets");
 
-        // This can be changed to a different classifier
         Function<Instances, Classifier> classifier = RF;
 
         RealDataExperiment experiment = new RealDataExperiment(pool, classifier, epsilon, shapeletFeatureCount, eletFeatureCount, method, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);

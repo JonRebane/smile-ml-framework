@@ -43,7 +43,6 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     private Classifier classifier;
     private StaticMetricExtractor staticMetricFeatureExtractor;
     private List<Elet> eletFeatures;
-    private double[][] eletFeatureMatrix;
     private FastVector allAttributes;
     private Attribute classAttribute;
     private Instances trainInstances;
@@ -66,63 +65,61 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
         this.epsilon = epsilon;
         this.sequenceDuration = sequenceDuration;
         this.numDimensions = numDimensions;
-        classIdsset = new HashSet<>(classIds);
+        this.eletFeaturesCount = eletFeatureCount;
+
+        this.database = null;
+        this.method = method;
+        this.classIdsset = new HashSet<>(classIds);
         for (Sequence seq : train) {
             seq.sortIntervals();
         }
         //TODO: static metrics
-        staticMetricFeatureExtractor = new StaticMetricExtractor();
-        StaticFeatureMatrix staticFeatureMatrix = staticMetricFeatureExtractor.extractAll(train);
-        //distance:
-        DistanceFeatureExtractor distanceFeatureExtractor = new DistanceFeatureExtractor(train, classIds, numDimensions, sequenceDuration);
-        distanceFeatureMatrix = distanceFeatureExtractor.calculateDistanceFeatureMatrix();
-        //shapelets:
-        shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS, classIds);
 
-        this.eletFeaturesCount = eletFeatureCount;
-        eletFeatures = new ArrayList<>();
-        eletFeatureMatrix = extractEletFeatureMatrix(train);
+        double[][] staticMatrix = new double[train.size()][0];
+        double[][] distanceMatrix = new double[train.size()][0];
+        double[][] shapeletMatrix =  new double[train.size()][0];
+        double[][] eletFeatureMatrix = new double[train.size()][0];
 
-        this.database = null;
-        this.method = method;
-
-        //create all the jobs:
-        int numSequencesPerJob = 10;
-        int prev = 0;
-        List<ShapeletExtractor> jobs = new LinkedList<>();
-        for (int i = 0; i < train.size(); i += numSequencesPerJob) {
-            jobs.add(new ShapeletExtractor(database, train, prev, Math.min(i + numSequencesPerJob, train.size()), shapeletFeatureMatrix, epsilon));
-            prev = i + numSequencesPerJob;
-        }
-        //submit all jobs
-        Collection<Future<?>> futures = new LinkedList<Future<?>>();
-        for (ShapeletExtractor job : jobs) {
-            futures.add(pool.submit(job));
-        }
-        for (Future<?> future : futures) {
-            future.get();
+        if (this.method.contains("1")) {
+            staticMetricFeatureExtractor = new StaticMetricExtractor();
+            StaticFeatureMatrix staticFeatureMatrix = staticMetricFeatureExtractor.extractAll(train);
+            staticMatrix = staticFeatureMatrix.getMatrix();
         }
 
-        shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
-        double[][] staticMatrix = staticFeatureMatrix.getMatrix();
-        double[][] distanceMatrix = distanceFeatureMatrix.getMatrix();
-        double[][] shapeletMatrix = shapeletFeatureMatrix.getMatrix();
-        double[][] eletMatrix = eletFeatureMatrix;
-
-        if ("1".equals(method)) {
-            distanceMatrix = new double[train.size()][0];
-            shapeletMatrix = new double[train.size()][0];
-            eletMatrix = new double[train.size()][0];
-        } else if ("1+2".equals(method)) {
-            shapeletMatrix = new double[train.size()][0];
-            eletMatrix = new double[train.size()][0];
-        } else if ("1+2+3".equals(method)) {
-            eletMatrix = new double[train.size()][0];
-        } else if (!"1+2+3+4".equals(method)) {
-            throw new IllegalArgumentException("illegal method");
+        if (this.method.contains("2")) {
+            DistanceFeatureExtractor distanceFeatureExtractor = new DistanceFeatureExtractor(train, classIds, numDimensions, sequenceDuration);
+            distanceFeatureMatrix = distanceFeatureExtractor.calculateDistanceFeatureMatrix();
+            distanceMatrix = distanceFeatureMatrix.getMatrix();
         }
 
-        trainInstances = buildInstances(train, classIds, staticMatrix, distanceMatrix, shapeletMatrix, eletMatrix, "testdata" + File.separator + "stifeTrainData.csv");
+        if (this.method.contains("3")) {
+            shapeletFeatureMatrix = new ShapeletFeatureMatrix(train.size(), numDimensions, Sequence.NUM_RELATIONSHIPS, classIds);
+            int numSequencesPerJob = 10;
+            int prev = 0;
+            List<ShapeletExtractor> jobs = new LinkedList<>();
+            for (int i = 0; i < train.size(); i += numSequencesPerJob) {
+                jobs.add(new ShapeletExtractor(database, train, prev, Math.min(i + numSequencesPerJob, train.size()), shapeletFeatureMatrix, epsilon));
+                prev = i + numSequencesPerJob;
+            }
+            //submit all jobs
+            Collection<Future<?>> futures = new LinkedList<>();
+            for (ShapeletExtractor job : jobs) {
+                futures.add(pool.submit(job));
+            }
+            for (Future<?> future : futures) {
+                future.get();
+            }
+
+            shapeletFeatureMatrix.featureSelection(shapeletFeatureCount);
+            shapeletMatrix = shapeletFeatureMatrix.getMatrix();
+        }
+
+        if (this.method.contains("4")) {
+            this.eletFeatures = new ArrayList<>();
+            eletFeatureMatrix = extractEletFeatureMatrix(train);
+        }
+
+        trainInstances = buildInstances(train, classIds, staticMatrix, distanceMatrix, shapeletMatrix, eletFeatureMatrix, "testdata" + File.separator + "stifeTrainData.csv");
         classifier = classifierSupplier.apply(trainInstances);
         classifier.buildClassifier(trainInstances);
         allAttributes = new FastVector();
@@ -276,25 +273,27 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     private Instance makeInstance(Sequence sequence) throws TimeScaleException, InvalidEventTableDimensionException {
         Sequence mySeq = new Sequence(sequence);
         mySeq.sortIntervals();
-        double[] staticFeatures = onlineStaticFeatureExtraction(mySeq);
+
+        double[] staticFeatures = new double[0];
         double[] shapeletFeatures = new double[0];
         double[] distanceFeatures = new double[0];
         double[] eletFeatures = new double[0];
-        if ("1".equals(method)) {
 
-        } else if ("1+2".equals(this.method)) {
-            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
-        } else if ("1+2+3".equals(method)) {
-            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
-            shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
-        } else if ("1+2+3+4".equals(method)) {
-            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
-            shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
-            eletFeatures = onlineEletFeatures(mySeq);
-        } else {
-            throw new IllegalArgumentException("illegal method");
+        if (this.method.contains("1")) {
+            staticFeatures = onlineStaticFeatureExtraction(mySeq);
         }
 
+        if (this.method.contains("2")) {
+            distanceFeatures = onlineDistanceFeatureExtraction(mySeq);
+        }
+
+        if (this.method.contains("3")) {
+            shapeletFeatures = onlineShapeletFeatureExtraction(mySeq);
+        }
+
+        if (this.method.contains("4")) {
+            eletFeatures = onlineEletFeatures(mySeq);
+        }
 
 
         Instances instances = new Instances("test instances", allAttributes, 1);
@@ -399,7 +398,7 @@ public abstract class AbstractSTIFERFClassifier implements STIClassifier<Integer
     }
 
     public static String getName() {
-        return "STIFE framework + Weka Random Forest";
+        return "STIFE framework";
     }
 
     //only for test purposes!!!!
