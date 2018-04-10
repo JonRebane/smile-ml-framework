@@ -53,20 +53,26 @@ public class RuntimeComparisonRealDatasets {
 
 
     public static void main(String[] args) throws Exception {
-        Sequence.METHOD = 1; // 1 == a and 3 == b
-        String method = "1+2+3a";
-        ExecutorService pool = Executors.newCachedThreadPool();
-        int epsilon = 5;
-        int shapeletFeatureCount = 75;
-        int eletFeatureCount = 75;
-        File singleLabelDatasetPath = new File("data/singleLabelDatasets");
-        File multiLabelDatasetPath = new File("data/multiLabelDatasets");
+        int[] shapeletFeatures = new int[]{10, 25, 50, 100, 200};
 
-        Function<Instances, Classifier> classifier = RF;
+        for (int shapeletFeature : shapeletFeatures) {
+            Sequence.METHOD = 1; // 1 == a and 3 == b
+            String method = "1+2+3a"; // 1 1+2 1+2+3a 1+2+3b _1+2+3a+4_ 1+2+3b+4
+            ExecutorService pool = Executors.newCachedThreadPool();
+            int epsilon = 5;
+            int shapeletFeatureCount = shapeletFeature; // 10 25 50 _75_ 100 200
+            int eletFeatureCount = 75;
+            File singleLabelDatasetPath = new File("data/singleLabelDatasets");
+            File multiLabelDatasetPath = new File("data/multiLabelDatasets");
 
-        RealDataExperiment experiment = new RealDataExperiment(pool, classifier, epsilon, shapeletFeatureCount, eletFeatureCount, method, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
-        experiment.runExperiment();
-        pool.shutdown();
+            Function<Instances, Classifier> classifier = RF;
+
+            RealDataExperiment experiment = new RealDataExperiment(pool, classifier, epsilon, shapeletFeatureCount, eletFeatureCount, method, singleLabelDatasetPath, multiLabelDatasetPath, new Random(13), 10);
+            experiment.runExperiment();
+            pool.shutdown();
+        }
+
+
     }
 
     private static void testSeq(Sequence sequence, int max, double as, double ae, double bs, double be) {

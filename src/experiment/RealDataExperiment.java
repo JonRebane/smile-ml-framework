@@ -2,12 +2,7 @@ package experiment;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
@@ -54,13 +49,9 @@ public class RealDataExperiment extends Experiment {
         if (runSingle) {
             for (File dir : singleLabelDataSetPath.listFiles()) {
 
-                System.out.println("Processing " + dir.getName());
+                //System.out.println("Processing " + dir.getName());
                 List<ClassifierResult> resultList = singleLabelClassifierEvaluation(dir);
-                for (ClassifierResult classifierResult : resultList) {
-                    System.out.println(classifierResult.getClassifierName() +
-                            " acc: " + classifierResult.meanAccuracy() +
-                            " auc: " + classifierResult.meanAUC());
-                }
+
                 results.put(dir.getName(), resultList);
             }
         }
@@ -110,7 +101,7 @@ public class RealDataExperiment extends Experiment {
             measureSingleLabelClassificationPerformance(test, testClassIds, new SingleLabelSTIFERFClassifier(random, classifierBuilder, train, trainClassIds, numDimensions, sequenceDuration, epsilon, shapeletFeatureCount, eletFeatureCount, method, pool), stifeResult);
         }
         //save results:
-        List<ClassifierResult> resultList = Arrays.asList(ibsmResult, compressedIBSMResult, stifeResult);
+        List<ClassifierResult> resultList = Collections.singletonList(stifeResult); // ibsmResult, compressedIBSMResult,
         return resultList;
     }
 

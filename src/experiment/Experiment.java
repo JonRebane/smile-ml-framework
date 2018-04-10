@@ -97,7 +97,7 @@ public abstract class Experiment {
 	}
 
 	protected void printExperimentResults(Map<String, List<ClassifierResult>> results) {
-		System.out.println("------------------------------------------------------------------------------------------");
+		//System.out.println("------------------------------------------------------------------------------------------");
 		for(String name : results.keySet()){
 
 			//System.out.println("Results for data-set "+ name);
