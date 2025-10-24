@@ -3,7 +3,7 @@
 Purpose:
 
 Implementation of the SMILE framework in the Research Project concerning Sequences of temporal Intervals.
-
+https://link.springer.com/article/10.1007/s10618-020-00719-3
 
 
 Quickstart:
